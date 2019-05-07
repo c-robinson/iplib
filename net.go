@@ -147,8 +147,10 @@ func (n Net) Count6() *big.Int {
 		return big.NewInt(1)
 	}
 	var z, e = big.NewInt(2), big.NewInt(int64(exp))
-	z.Sub(z.Exp(z, e, nil), big.NewInt(2))
-	return z
+	if n.version == 6 {
+		return z.Exp(z, e, nil)
+	}
+	return z.Sub(z.Exp(z, e, nil), big.NewInt(2))
 }
 
 // Enumerate generates an array of all usable addresses in Net up to the
