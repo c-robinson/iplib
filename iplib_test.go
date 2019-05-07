@@ -4,6 +4,7 @@ import (
 	"math/big"
 	"net"
 	"sort"
+	"strconv"
 	"testing"
 )
 
@@ -430,6 +431,11 @@ var NewNetTests = []struct {
 		24,
 		"192.168.0.0/24",
 	},
+	{
+		net.IP{32, 1, 13, 184, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		64,
+		"2001:db8::/64",
+	},
 }
 
 func TestNewNet(t *testing.T) {
@@ -540,6 +546,13 @@ var NewNetBetweenTests = []struct {
 		true,
 		nil,
 	},
+	{
+		net.IP{32, 1, 13, 183, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, //net.IP{32, 1, 13, 184, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		net.IP{32, 1, 13, 184, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0}, //net.IP{32, 1, 13, 184, 0, 0, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255},
+		"2001:db8::/64",
+		true,
+		nil,
+	},
 }
 func TestNewNetBetween(t *testing.T) {
 	for _, tt := range NewNetBetweenTests {
@@ -570,7 +583,7 @@ var NetworkTests = []struct {
 	firstaddr  net.IP
 	lastaddr   net.IP
 	version    int
-	count      uint32
+	count      string // might overflow uint64
 }{
 	{
 		"10.1.2.3/8",
@@ -583,7 +596,7 @@ var NetworkTests = []struct {
 		net.IP{10,0,0,1},
 		net.IP{10,255,255,254},
 		4,
-		16777214,
+		"16777214",
 	},
 	{
 		"192.168.1.1/23",
@@ -596,7 +609,7 @@ var NetworkTests = []struct {
 		net.IP{192,168,0,1},
 		net.IP{192,168,1,254},
 		4,
-		510,
+		"510",
 	},
 	{
 		"192.168.1.61/26",
@@ -609,7 +622,7 @@ var NetworkTests = []struct {
 		net.IP{192,168,1,1},
 		net.IP{192,168,1,62},
 		4,
-		62,
+		"62",
 	},
 	{
 		"192.168.1.66/26",
@@ -622,7 +635,7 @@ var NetworkTests = []struct {
 		net.IP{192,168,1,65},
 		net.IP{192,168,1,126},
 		4,
-		62,
+		"62",
 	},
 	{
 		"192.168.1.1/30",
@@ -635,7 +648,7 @@ var NetworkTests = []struct {
 		net.IP{192,168,1,1},
 		net.IP{192,168,1,2},
 		4,
-		2,
+		"2",
 	},
 	{
 		"192.168.1.1/31",
@@ -648,7 +661,7 @@ var NetworkTests = []struct {
 		net.IP{192,168,1,0},
 		net.IP{192,168,1,1},
 		4,
-		0,
+		"0",
 	},
 	{
 		"192.168.1.15/32",
@@ -661,13 +674,29 @@ var NetworkTests = []struct {
 		net.IP{192,168,1,15},
 		net.IP{192,168,1,15},
 		4,
-		1,
+		"1",
+	},
+	{
+		"2001:db8::/64",
+		net.IP{32, 1, 13, 184, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		64,
+		net.IP{},
+		net.IPMask{255, 255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0},
+		net.IPMask{},
+		net.IP{},
+		net.IP{32, 1, 13, 184, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+		net.IP{32, 1, 13, 184, 0, 0, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255},
+		6,
+		"18446744073709551616",
 	},
 }
 
 // ParseCIDR wraps net.ParseCIDR so it's redundant to test it except to make sure the wildcard is correct
 func TestParseCIDR(t *testing.T) {
 	for _, tt := range NetworkTests {
+		if tt.version == 6 {
+			continue
+		}
 		_, ipn, _:= ParseCIDR(tt.inaddrStr)
 		if ipn.Wildcard().String() != tt.wildcard.String() {
 			t.Errorf("On %s got Network.Wildcard == %v, want %v", tt.inaddrStr, ipn.Wildcard(), tt.wildcard)
@@ -677,6 +706,9 @@ func TestParseCIDR(t *testing.T) {
 
 func TestNet_BroadcastAddress(t *testing.T) {
 	for _, tt := range NetworkTests {
+		if tt.version == 6 {
+			continue
+		}
 		_, ipn, _:= ParseCIDR(tt.inaddrStr)
 		if addr := ipn.BroadcastAddress(); !tt.broadcast.Equal(addr) {
 			t.Errorf("On %s got Network.Broadcast == %v, want %v", tt.inaddrStr, addr, tt.broadcast)
@@ -699,18 +731,37 @@ func TestNet_Version(t *testing.T) {
 
 func TestNet_Count(t *testing.T) {
 	for _, tt := range NetworkTests {
+		if tt.version == 6 {
+			continue
+		}
 		_, ipn, _:= ParseCIDR(tt.inaddrStr)
-		if ipn.Count() != tt.count {
-			t.Errorf("On %s got Network.Count == %d, want %d", tt.inaddrStr, ipn.Count(), tt.count)
+		count, _ := strconv.Atoi(tt.count)
+		if ipn.Count() != uint32(count) {
+			t.Errorf("On %s got Network.Count == %d, want %d", tt.inaddrStr, ipn.Count(), count)
 		}
 	}
 }
 
 func TestNet_Count4(t *testing.T) {
 	for _, tt := range NetworkTests {
+		if tt.version == 6 {
+			continue
+		}
 		_, ipn, _:= ParseCIDR(tt.inaddrStr)
-		if ipn.Count4() != tt.count {
-			t.Errorf("On %s got Network.Count4 == %d, want %d", tt.inaddrStr, ipn.Count4(), tt.count)
+		count, _ := strconv.Atoi(tt.count)
+		if ipn.Count() != uint32(count) {
+			t.Errorf("On %s got Network.Count4 == %d, want %d", tt.inaddrStr, ipn.Count4(), count)
+		}
+	}
+}
+
+func TestNet_Count6(t *testing.T) {
+	for _, tt := range NetworkTests {
+		_, ipn, _:= ParseCIDR(tt.inaddrStr)
+		count, _ := new(big.Int).SetString(tt.count, 10)
+		res := ipn.Count6().Cmp(count)
+		if res != 0 {
+			t.Errorf("On %s got Network.Count6 == %s, want %s", tt.inaddrStr, ipn.Count6().String(), count.String())
 		}
 	}
 }
@@ -726,6 +777,9 @@ func TestNet_FirstAddress(t *testing.T) {
 
 func TestNet_finalAddress(t *testing.T) {
 	for _, tt := range NetworkTests {
+		if tt.version == 6 {
+			continue
+		}
 		_, ipn, _:= ParseCIDR(tt.inaddrStr)
 		if addr, ones := ipn.finalAddress(); !tt.broadcast.Equal(addr) {
 			t.Errorf("On %s got Network.finalAddress == %v, want %v mask length %d)", tt.inaddrStr, addr, tt.broadcast, ones)
@@ -744,6 +798,9 @@ func TestNet_LastAddress(t *testing.T) {
 
 func TestNet_NetworkAddress(t *testing.T) {
 	for _, tt := range NetworkTests {
+		if tt.version == 6 {
+			continue
+		}
 		_, ipn, _:= ParseCIDR(tt.inaddrStr)
 		if addr := ipn.NetworkAddress(); !tt.network.Equal(addr) {
 			t.Errorf("On %s got Network.NetworkAddress == %v, want %v", tt.inaddrStr, addr, tt.network)
