@@ -7,17 +7,21 @@ IPLib is an extension of the `net.IP` utilities and is intended to make working
 with IP addresses a little bit easier by providing tools to manage blocks of
 addresses. Tools include:
 
+[![Documentation](https://godoc.org/github.com/<username>/<library>?status.svg)](http://godoc.org/github.com/c-robinson/iplib)
+[![Go Report Card](https://goreportcard.com/badge/github.com/<username>/<library>)](https://goreportcard.com/report/github.com/c-robinson/iplib)
+
 ##### net.IP tools
 
 Some simple tools for performing common tasks against IP objects:
 
 - Compare two addresses
-- Get the delta between addresses
+- Get the delta between two addresses
 - Sort
 - Decrement or increment addresses
-- Get the version of an address (net.IP().To4() doesn't do what you think)
-- Convert to and from integer
-- Print as hex string
+- Print v4 as a hexadecimal string
+- Print v6 in fully expanded form
+- Convert between net.IP, integer and hexadecimal
+- Get the version of a v4 address or force a 6to4 address to be a v4 address
 
 ##### iplib.IPNet
 
