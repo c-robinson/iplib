@@ -14,40 +14,39 @@ var IPTests = []struct {
 	prev   net.IP
 	intval uint32
 	hexval string
-
 }{
 	{
-		net.IP{10,1,2,3},
-		net.IP{10,1,2,4},
-		net.IP{10,1,2,2},
+		net.IP{10, 1, 2, 3},
+		net.IP{10, 1, 2, 4},
+		net.IP{10, 1, 2, 2},
 		167838211,
 		"0a010203",
 	},
 	{
-		net.IP{10,1,2,255},
-		net.IP{10,1,3,0},
-		net.IP{10,1,2,254},
+		net.IP{10, 1, 2, 255},
+		net.IP{10, 1, 3, 0},
+		net.IP{10, 1, 2, 254},
 		167838463,
 		"0a0102ff",
 	},
 	{
-		net.IP{10,1,2,0},
-		net.IP{10,1,2,1},
-		net.IP{10,1,1,255},
+		net.IP{10, 1, 2, 0},
+		net.IP{10, 1, 2, 1},
+		net.IP{10, 1, 1, 255},
 		167838208,
 		"0a010200",
 	},
 	{
-		net.IP{255,255,255,255},
-		net.IP{255,255,255,255},
-		net.IP{255,255,255,254},
+		net.IP{255, 255, 255, 255},
+		net.IP{255, 255, 255, 255},
+		net.IP{255, 255, 255, 254},
 		4294967295,
 		"ffffffff",
 	},
 	{
-		net.IP{0,0,0,0},
-		net.IP{0,0,0,1},
-		net.IP{0,0,0,0},
+		net.IP{0, 0, 0, 0},
+		net.IP{0, 0, 0, 1},
+		net.IP{0, 0, 0, 0},
 		0,
 		"00000000",
 	},
@@ -116,28 +115,27 @@ var IP6Tests = []struct {
 	intval string
 	hexval string
 	expand string
-
 }{
 	{
 		net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 46, 3, 112, 115, 52},
-		net.IP{32,1,13,184,133,163,0,0,0,0,138,46,3,112,115,53},
-		net.IP{32,1,13,184,133,163,0,0,0,0,138,46,3,112,115,51},
+		net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 46, 3, 112, 115, 53},
+		net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 46, 3, 112, 115, 51},
 		"42540766452641154071740215577757643572",
 		"2001:db8:85a3::8a2e:370:7334",
 		"2001:0db8:85a3:0000:0000:8a2e:0370:7334",
 	},
 	{
-		net.IP{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		net.IP{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-		net.IP{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+		net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+		net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		"0",
 		"::",
 		"0000:0000:0000:0000:0000:0000:0000:0000",
 	},
 	{
-		net.IP{255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255},
-		net.IP{255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255},
-		net.IP{255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,254},
+		net.IP{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255},
+		net.IP{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255},
+		net.IP{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 254},
 		"340282366920938463463374607431768211455",
 		"ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
 		"ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
@@ -210,33 +208,33 @@ var IPDeltaTests = []struct {
 	decres uint32
 }{
 	{
-		net.IP{192,168,2,2},
-		net.IP{192,168,1,1},
-		net.IP{192,168,3,3},
+		net.IP{192, 168, 2, 2},
+		net.IP{192, 168, 1, 1},
+		net.IP{192, 168, 3, 3},
 		257,
 		257,
 		257,
 	},
 	{
-		net.IP{10,0,0,0},
-		net.IP{9,0,0,0},
-		net.IP{11,0,0,0},
+		net.IP{10, 0, 0, 0},
+		net.IP{9, 0, 0, 0},
+		net.IP{11, 0, 0, 0},
 		16777216,
 		16777216,
 		16777216,
 	},
 	{
-		net.IP{255,255,255,0},
-		net.IP{255,255,252,0},
-		net.IP{255,255,255,255},
+		net.IP{255, 255, 255, 0},
+		net.IP{255, 255, 252, 0},
+		net.IP{255, 255, 255, 255},
 		768,
 		255,
 		768,
 	},
 	{
-		net.IP{0,0,0,255},
-		net.IP{0,0,0,0},
-		net.IP{0,0,3,255},
+		net.IP{0, 0, 0, 255},
+		net.IP{0, 0, 0, 0},
+		net.IP{0, 0, 3, 255},
 		768,
 		768,
 		255,
@@ -302,17 +300,17 @@ var IPDelta6Tests = []struct {
 		"4294967296",
 	},
 	{
-		net.IP{255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,0},
-		net.IP{255,255,255,255,255,255,255,255,255,255,255,255,255,255,251,0},
-		net.IP{255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255},
+		net.IP{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 0},
+		net.IP{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 251, 0},
+		net.IP{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255},
 		"1024",
 		"255",
 		"1024",
 	},
 	{
-		net.IP{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,255},
-		net.IP{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-		net.IP{0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,255},
+		net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255},
+		net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 255},
 		"1024",
 		"1024",
 		"255",
@@ -358,57 +356,56 @@ func TestIncrementIP6By(t *testing.T) {
 }
 
 var IPVersionTests = []struct {
-	ipaddr  net.IP
-	version int
+	ipaddr   net.IP
+	version  int
 	eversion int
 }{
 	{
-		net.IP{0,0,0,0},
+		net.IP{0, 0, 0, 0},
 		4,
 		4,
 	},
 	{
-		net.IP{192,168,1,1},
+		net.IP{192, 168, 1, 1},
 		4,
 		4,
 	},
 	{
-		net.IP{255,255,255,255},
+		net.IP{255, 255, 255, 255},
 		4,
 		4,
 	},
 	{
-		net.IP{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+		net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		6,
 		6,
 	},
 	{
-		net.IP{32,1,13,184,133,163,0,0,0,0,138,46,3,112,115,52},
+		net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 46, 3, 112, 115, 52},
 		6,
 		6,
 	},
 	{
-		net.IP{255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255},
+		net.IP{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255},
 		6,
 		6,
 	},
 	// these are the 6-to-4 versions of the first 3 test cases
 	{
-		net.IP{0,0,0,0,0,0,0,0,0,0,255,255,0,0,0,0},
+		net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 0, 0, 0, 0},
 		6,
 		4,
 	},
 	{
-		net.IP{0,0,0,0,0,0,0,0,0,0,255,255,192,168,1,1},
+		net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 192, 168, 1, 1},
 		6,
 		4,
 	},
 	{
-		net.IP{0,0,0,0,0,0,0,0,0,0,255,255,255,255,255,255},
+		net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 255, 255, 255},
 		6,
 		4,
 	},
-
 }
 
 func Test_Version(t *testing.T) {
@@ -435,22 +432,22 @@ var NewNetTests = []struct {
 	out     string
 }{
 	{
-		net.IP{192,168,0,0},
+		net.IP{192, 168, 0, 0},
 		32,
 		"192.168.0.0/32",
 	},
 	{
-		net.IP{192,168,0,0},
+		net.IP{192, 168, 0, 0},
 		24,
 		"192.168.0.0/24",
 	},
 	{
-		net.IP{192,168,0,7},
+		net.IP{192, 168, 0, 7},
 		32,
 		"192.168.0.7/32",
 	},
 	{
-		net.IP{192,168,0,7},
+		net.IP{192, 168, 0, 7},
 		24,
 		"192.168.0.0/24",
 	},
@@ -479,92 +476,92 @@ var NewNetBetweenTests = []struct {
 	err   error
 }{
 	{
-		net.IP{192,168,0,255},
-		net.IP{192,168,2,0},
+		net.IP{192, 168, 0, 255},
+		net.IP{192, 168, 2, 0},
 		"192.168.1.0/24",
 		true,
 		nil,
 	},
 	{
-		net.IP{192,168,0,255},
-		net.IP{10,0,0,0},
+		net.IP{192, 168, 0, 255},
+		net.IP{10, 0, 0, 0},
 		"",
 		false,
 		ErrNoValidRange,
 	},
 	{
-		net.IP{192,168,0,255},
+		net.IP{192, 168, 0, 255},
 		net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 46, 3, 112, 115, 52},
 		"",
 		false,
 		ErrNoValidRange,
 	},
 	{
-		net.IP{192,168,0,255},
-		net.IP{192,168,0,255},
+		net.IP{192, 168, 0, 255},
+		net.IP{192, 168, 0, 255},
 		"",
 		false,
 		ErrNoValidRange,
 	},
 	{
-		net.IP{192,168,0,255},
-		net.IP{192,168,1,1},
+		net.IP{192, 168, 0, 255},
+		net.IP{192, 168, 1, 1},
 		"192.168.1.0/32",
 		true,
 		nil,
 	},
 	{
-		net.IP{192,168,1,0},
-		net.IP{192,168,1,2},
+		net.IP{192, 168, 1, 0},
+		net.IP{192, 168, 1, 2},
 		"192.168.1.1/32",
 		true,
 		nil,
 	},
 	{
-		net.IP{192,168,0,255},
-		net.IP{192,168,1,2},
+		net.IP{192, 168, 0, 255},
+		net.IP{192, 168, 1, 2},
 		"192.168.1.0/31",
 		true,
 		nil,
 	},
 	{
-		net.IP{192,168,0,255},
-		net.IP{192,168,1,3},
+		net.IP{192, 168, 0, 255},
+		net.IP{192, 168, 1, 3},
 		"192.168.1.0/31",
 		false,
 		nil,
 	},
 	{
-		net.IP{192,168,1,0},
-		net.IP{192,168,1,3},
+		net.IP{192, 168, 1, 0},
+		net.IP{192, 168, 1, 3},
 		"192.168.1.1/32",
 		false,
 		nil,
 	},
 	{
-		net.IP{192,168,0,255},
-		net.IP{192,168,1,4},
+		net.IP{192, 168, 0, 255},
+		net.IP{192, 168, 1, 4},
 		"192.168.1.0/30",
 		true,
 		nil,
 	},
 	{
-		net.IP{192,168,0,255},
-		net.IP{192,168,1,5},
+		net.IP{192, 168, 0, 255},
+		net.IP{192, 168, 1, 5},
 		"192.168.1.0/30",
 		false,
 		nil,
 	},
 	{
-		net.IP{192,168,0,254},
-		net.IP{192,168,2,0},
+		net.IP{192, 168, 0, 254},
+		net.IP{192, 168, 2, 0},
 		"192.168.0.255/32",
 		false,
 		nil,
 	},
 	{
-		net.IP{192,168,0,255},
-		net.IP{192,168,2,0},
+		net.IP{192, 168, 0, 255},
+		net.IP{192, 168, 2, 0},
 		"192.168.1.0/24",
 		true,
 		nil,
@@ -577,6 +574,7 @@ var NewNetBetweenTests = []struct {
 		nil,
 	},
 }
+
 func TestNewNetBetween(t *testing.T) {
 	for _, tt := range NewNetBetweenTests {
 		xnet, exact, err := NewNetBetween(tt.start, tt.end)
@@ -610,92 +608,92 @@ var NetworkTests = []struct {
 }{
 	{
 		"10.1.2.3/8",
-		net.IP{10,1,2,3},
+		net.IP{10, 1, 2, 3},
 		8,
-		net.IP{10,0,0,0},
-		net.IPMask{255,0,0,0},
-		net.IPMask{0,255,255,255},
-		net.IP{10,255,255,255},
-		net.IP{10,0,0,1},
-		net.IP{10,255,255,254},
+		net.IP{10, 0, 0, 0},
+		net.IPMask{255, 0, 0, 0},
+		net.IPMask{0, 255, 255, 255},
+		net.IP{10, 255, 255, 255},
+		net.IP{10, 0, 0, 1},
+		net.IP{10, 255, 255, 254},
 		4,
 		"16777214",
 	},
 	{
 		"192.168.1.1/23",
-		net.IP{192,168,1,1},
+		net.IP{192, 168, 1, 1},
 		23,
-		net.IP{192,168,0,0},
-		net.IPMask{255,255,254,0},
-		net.IPMask{0,0,1,255},
-		net.IP{192,168,1,255},
-		net.IP{192,168,0,1},
-		net.IP{192,168,1,254},
+		net.IP{192, 168, 0, 0},
+		net.IPMask{255, 255, 254, 0},
+		net.IPMask{0, 0, 1, 255},
+		net.IP{192, 168, 1, 255},
+		net.IP{192, 168, 0, 1},
+		net.IP{192, 168, 1, 254},
 		4,
 		"510",
 	},
 	{
 		"192.168.1.61/26",
-		net.IP{192,168,1,61},
+		net.IP{192, 168, 1, 61},
 		26,
-		net.IP{192,168,1,0},
-		net.IPMask{255,255,255,192},
-		net.IPMask{0,0,0,63},
-		net.IP{192,168,1,63},
-		net.IP{192,168,1,1},
-		net.IP{192,168,1,62},
+		net.IP{192, 168, 1, 0},
+		net.IPMask{255, 255, 255, 192},
+		net.IPMask{0, 0, 0, 63},
+		net.IP{192, 168, 1, 63},
+		net.IP{192, 168, 1, 1},
+		net.IP{192, 168, 1, 62},
 		4,
 		"62",
 	},
 	{
 		"192.168.1.66/26",
-		net.IP{192,168,1,66},
+		net.IP{192, 168, 1, 66},
 		26,
-		net.IP{192,168,1,64},
-		net.IPMask{255,255,255,192},
-		net.IPMask{0,0,0,63},
-		net.IP{192,168,1,127},
-		net.IP{192,168,1,65},
-		net.IP{192,168,1,126},
+		net.IP{192, 168, 1, 64},
+		net.IPMask{255, 255, 255, 192},
+		net.IPMask{0, 0, 0, 63},
+		net.IP{192, 168, 1, 127},
+		net.IP{192, 168, 1, 65},
+		net.IP{192, 168, 1, 126},
 		4,
 		"62",
 	},
 	{
 		"192.168.1.1/30",
-		net.IP{192,168,1,1},
+		net.IP{192, 168, 1, 1},
 		30,
-		net.IP{192,168,1,0},
-		net.IPMask{255,255,255,252},
-		net.IPMask{0,0,0,3},
-		net.IP{192,168,1,3},
-		net.IP{192,168,1,1},
-		net.IP{192,168,1,2},
+		net.IP{192, 168, 1, 0},
+		net.IPMask{255, 255, 255, 252},
+		net.IPMask{0, 0, 0, 3},
+		net.IP{192, 168, 1, 3},
+		net.IP{192, 168, 1, 1},
+		net.IP{192, 168, 1, 2},
 		4,
 		"2",
 	},
 	{
 		"192.168.1.1/31",
-		net.IP{192,168,1,1},
+		net.IP{192, 168, 1, 1},
 		31,
-		net.IP{192,168,1,0},
-		net.IPMask{255,255,255,254},
-		net.IPMask{0,0,0,1},
-		net.IP{192,168,1,1},
-		net.IP{192,168,1,0},
-		net.IP{192,168,1,1},
+		net.IP{192, 168, 1, 0},
+		net.IPMask{255, 255, 255, 254},
+		net.IPMask{0, 0, 0, 1},
+		net.IP{192, 168, 1, 1},
+		net.IP{192, 168, 1, 0},
+		net.IP{192, 168, 1, 1},
 		4,
 		"0",
 	},
 	{
 		"192.168.1.15/32",
-		net.IP{192,168,1,15},
+		net.IP{192, 168, 1, 15},
 		32,
-		net.IP{192,168,1,15},
-		net.IPMask{255,255,255,255},
-		net.IPMask{0,0,0,0},
-		net.IP{192,168,1,15},
-		net.IP{192,168,1,15},
-		net.IP{192,168,1,15},
+		net.IP{192, 168, 1, 15},
+		net.IPMask{255, 255, 255, 255},
+		net.IPMask{0, 0, 0, 0},
+		net.IP{192, 168, 1, 15},
+		net.IP{192, 168, 1, 15},
+		net.IP{192, 168, 1, 15},
 		4,
 		"1",
 	},
@@ -720,7 +718,7 @@ func TestParseCIDR(t *testing.T) {
 		if tt.version == 6 {
 			continue
 		}
-		_, ipn, _:= ParseCIDR(tt.inaddrStr)
+		_, ipn, _ := ParseCIDR(tt.inaddrStr)
 		if ipn.Wildcard().String() != tt.wildcard.String() {
 			t.Errorf("On %s got Network.Wildcard == %v, want %v", tt.inaddrStr, ipn.Wildcard(), tt.wildcard)
 		}
@@ -732,7 +730,7 @@ func TestNet_BroadcastAddress(t *testing.T) {
 		if tt.version == 6 {
 			continue
 		}
-		_, ipn, _:= ParseCIDR(tt.inaddrStr)
+		_, ipn, _ := ParseCIDR(tt.inaddrStr)
 		if addr := ipn.BroadcastAddress(); !tt.broadcast.Equal(addr) {
 			t.Errorf("On %s got Network.Broadcast == %v, want %v", tt.inaddrStr, addr, tt.broadcast)
 		}
@@ -741,10 +739,10 @@ func TestNet_BroadcastAddress(t *testing.T) {
 
 func TestNet_Version(t *testing.T) {
 	for _, tt := range NetworkTests {
-		_, ipnp, _:= ParseCIDR(tt.inaddrStr)
+		_, ipnp, _ := ParseCIDR(tt.inaddrStr)
 		ipnn := NewNet(tt.ipaddr, tt.inaddrMask)
 		if ipnp.Version() != tt.version {
-			t.Errorf("From ParseCIDR %s got Network.Version == %d, expect %d", tt.inaddrStr, ipnp.Version(),tt.version)
+			t.Errorf("From ParseCIDR %s got Network.Version == %d, expect %d", tt.inaddrStr, ipnp.Version(), tt.version)
 		}
 		if ipnn.Version() != tt.version {
 			t.Errorf("From NewNet %s got Network.Version == %d, want %d", tt.inaddrStr, ipnn.Version(), tt.version)
@@ -757,7 +755,7 @@ func TestNet_Count(t *testing.T) {
 		if tt.version == 6 {
 			continue
 		}
-		_, ipn, _:= ParseCIDR(tt.inaddrStr)
+		_, ipn, _ := ParseCIDR(tt.inaddrStr)
 		count, _ := strconv.Atoi(tt.count)
 		if ipn.Count() != uint32(count) {
 			t.Errorf("On %s got Network.Count == %d, want %d", tt.inaddrStr, ipn.Count(), count)
@@ -770,7 +768,7 @@ func TestNet_Count4(t *testing.T) {
 		if tt.version == 6 {
 			continue
 		}
-		_, ipn, _:= ParseCIDR(tt.inaddrStr)
+		_, ipn, _ := ParseCIDR(tt.inaddrStr)
 		count, _ := strconv.Atoi(tt.count)
 		if ipn.Count() != uint32(count) {
 			t.Errorf("On %s got Network.Count4 == %d, want %d", tt.inaddrStr, ipn.Count4(), count)
@@ -780,7 +778,7 @@ func TestNet_Count4(t *testing.T) {
 
 func TestNet_Count6(t *testing.T) {
 	for _, tt := range NetworkTests {
-		_, ipn, _:= ParseCIDR(tt.inaddrStr)
+		_, ipn, _ := ParseCIDR(tt.inaddrStr)
 		count, _ := new(big.Int).SetString(tt.count, 10)
 		res := ipn.Count6().Cmp(count)
 		if res != 0 {
@@ -791,7 +789,7 @@ func TestNet_Count6(t *testing.T) {
 
 func TestNet_FirstAddress(t *testing.T) {
 	for _, tt := range NetworkTests {
-		_, ipn, _:= ParseCIDR(tt.inaddrStr)
+		_, ipn, _ := ParseCIDR(tt.inaddrStr)
 		if addr := ipn.FirstAddress(); !tt.firstaddr.Equal(addr) {
 			t.Errorf("On %s got Network.FirstAddress == %v, want %v", tt.inaddrStr, addr, tt.firstaddr)
 		}
@@ -803,7 +801,7 @@ func TestNet_finalAddress(t *testing.T) {
 		if tt.version == 6 {
 			continue
 		}
-		_, ipn, _:= ParseCIDR(tt.inaddrStr)
+		_, ipn, _ := ParseCIDR(tt.inaddrStr)
 		if addr, ones := ipn.finalAddress(); !tt.broadcast.Equal(addr) {
 			t.Errorf("On %s got Network.finalAddress == %v, want %v mask length %d)", tt.inaddrStr, addr, tt.broadcast, ones)
 		}
@@ -812,7 +810,7 @@ func TestNet_finalAddress(t *testing.T) {
 
 func TestNet_LastAddress(t *testing.T) {
 	for _, tt := range NetworkTests {
-		_, ipn, _:= ParseCIDR(tt.inaddrStr)
+		_, ipn, _ := ParseCIDR(tt.inaddrStr)
 		if addr := ipn.LastAddress(); !tt.lastaddr.Equal(addr) {
 			t.Errorf("On %s got Network.LastAddress == %v, want %v", tt.inaddrStr, addr, tt.lastaddr)
 		}
@@ -824,30 +822,31 @@ func TestNet_NetworkAddress(t *testing.T) {
 		if tt.version == 6 {
 			continue
 		}
-		_, ipn, _:= ParseCIDR(tt.inaddrStr)
+		_, ipn, _ := ParseCIDR(tt.inaddrStr)
 		if addr := ipn.NetworkAddress(); !tt.network.Equal(addr) {
 			t.Errorf("On %s got Network.NetworkAddress == %v, want %v", tt.inaddrStr, addr, tt.network)
 		}
 	}
 }
 
-var enumerateTests  = []struct {
+var enumerateTests = []struct {
 	inaddr string
 	total  int
 	last   net.IP
 }{
-	{"192.168.0.0/22", 1022, net.IP{192,168,3,254} },
-	{"192.168.0.0/23", 510, net.IP{192,168,1,254} },
-	{"192.168.0.0/24", 254, net.IP{192,168,0,254} },
-	{"192.168.0.0/25", 126, net.IP{192,168,0,126} },
-	{"192.168.0.0/26", 62, net.IP{192,168,0,62} },
-	{"192.168.0.0/27", 30, net.IP{192,168,0,30} },
-	{"192.168.0.0/28", 14, net.IP{192,168,0,14} },
-	{"192.168.0.0/29", 6, net.IP{192,168,0,6} },
-	{"192.168.0.0/30", 2, net.IP{192,168,0,2} },
-	{"192.168.0.0/31", 2, net.IP{192,168,0,1} },
-	{"192.168.0.0/32", 1, net.IP{192,168,0,0} },
+	{"192.168.0.0/22", 1022, net.IP{192, 168, 3, 254}},
+	{"192.168.0.0/23", 510, net.IP{192, 168, 1, 254}},
+	{"192.168.0.0/24", 254, net.IP{192, 168, 0, 254}},
+	{"192.168.0.0/25", 126, net.IP{192, 168, 0, 126}},
+	{"192.168.0.0/26", 62, net.IP{192, 168, 0, 62}},
+	{"192.168.0.0/27", 30, net.IP{192, 168, 0, 30}},
+	{"192.168.0.0/28", 14, net.IP{192, 168, 0, 14}},
+	{"192.168.0.0/29", 6, net.IP{192, 168, 0, 6}},
+	{"192.168.0.0/30", 2, net.IP{192, 168, 0, 2}},
+	{"192.168.0.0/31", 2, net.IP{192, 168, 0, 1}},
+	{"192.168.0.0/32", 1, net.IP{192, 168, 0, 0}},
 }
+
 func TestNet_Enumerate(t *testing.T) {
 	for _, tt := range enumerateTests {
 		_, ipn, _ := ParseCIDR(tt.inaddr)
@@ -870,13 +869,14 @@ var enumerateVariableTests = []struct {
 	first  net.IP
 	last   net.IP
 }{
-	{ 0, 0, 1022, net.IP{192,168,0,1}, net.IP{192,168,3,254} },
-	{ 1, 0, 1021, net.IP{192,168,0,2}, net.IP{192,168,3,254} },
-	{ 256, 0, 766, net.IP{192,168,1,1}, net.IP{192,168,3,254} },
-	{ 0, 128, 128, net.IP{192,168,0,1}, net.IP{192,168,0,128} },
-	{ 20, 128, 128, net.IP{192,168,0,21}, net.IP{192,168,0,148} },
-	{ 1000, 100, 22, net.IP{192,168,3,233}, net.IP{192,168,3,254} },
+	{0, 0, 1022, net.IP{192, 168, 0, 1}, net.IP{192, 168, 3, 254}},
+	{1, 0, 1021, net.IP{192, 168, 0, 2}, net.IP{192, 168, 3, 254}},
+	{256, 0, 766, net.IP{192, 168, 1, 1}, net.IP{192, 168, 3, 254}},
+	{0, 128, 128, net.IP{192, 168, 0, 1}, net.IP{192, 168, 0, 128}},
+	{20, 128, 128, net.IP{192, 168, 0, 21}, net.IP{192, 168, 0, 148}},
+	{1000, 100, 22, net.IP{192, 168, 3, 233}, net.IP{192, 168, 3, 254}},
 }
+
 func TestNet_EnumerateWithVariables(t *testing.T) {
 	_, ipn, _ := ParseCIDR("192.168.0.0/22")
 	for _, tt := range enumerateVariableTests {
@@ -897,10 +897,10 @@ func TestNet_EnumerateWithVariables(t *testing.T) {
 }
 
 var incrTests = []struct {
-	inaddr    string
-	ipaddr    net.IP
-	nextaddr  net.IP
-	nexterr   error
+	inaddr   string
+	ipaddr   net.IP
+	nextaddr net.IP
+	nexterr  error
 }{
 	{
 		"192.168.1.0/23",
@@ -911,36 +911,36 @@ var incrTests = []struct {
 	{
 		"192.168.1.0/24",
 		net.IP{192, 168, 1, 254},
-		net.IP{192, 168, 1,255},
+		net.IP{192, 168, 1, 255},
 		ErrBroadcastAddress,
 	},
 	{
 		"192.168.2.0/24",
 		net.IP{192, 168, 2, 1},
-		net.IP{192, 168, 2,2},
+		net.IP{192, 168, 2, 2},
 		nil,
 	},
 	{
 		"192.168.3.0/24",
 		net.IP{192, 168, 3, 0},
-		net.IP{192, 168, 3,1},
+		net.IP{192, 168, 3, 1},
 		nil,
 	},
 	{
 		"192.168.4.0/24",
-		net.IP{192, 168, 5,1},
+		net.IP{192, 168, 5, 1},
 		net.IP{},
 		ErrAddressOutOfRange,
 	},
 	{
 		"192.168.1.0/31",
-		net.IP{192, 168, 1,0},
+		net.IP{192, 168, 1, 0},
 		net.IP{192, 168, 1, 1},
 		ErrBroadcastAddress,
 	},
 	{
 		"192.168.1.0/32",
-		net.IP{192, 168, 1,0},
+		net.IP{192, 168, 1, 0},
 		net.IP{},
 		ErrAddressAtEndOfRange,
 	},
@@ -960,10 +960,10 @@ func TestNet_NextIP(t *testing.T) {
 }
 
 var decrTests = []struct {
-	inaddr    string
-	ipaddr    net.IP
-	prevaddr  net.IP
-	preverr   error
+	inaddr   string
+	ipaddr   net.IP
+	prevaddr net.IP
+	preverr  error
 }{
 	{
 		"192.168.1.0/23",
@@ -974,13 +974,13 @@ var decrTests = []struct {
 	{
 		"192.168.1.0/24",
 		net.IP{192, 168, 1, 254},
-		net.IP{192, 168, 1,253},
+		net.IP{192, 168, 1, 253},
 		nil,
 	},
 	{
 		"192.168.2.0/24",
 		net.IP{192, 168, 2, 1},
-		net.IP{192, 168, 2,0},
+		net.IP{192, 168, 2, 0},
 		ErrNetworkAddress,
 	},
 	{
@@ -991,19 +991,19 @@ var decrTests = []struct {
 	},
 	{
 		"192.168.4.0/24",
-		net.IP{192, 168, 5,1},
+		net.IP{192, 168, 5, 1},
 		net.IP{},
 		ErrAddressOutOfRange,
 	},
 	{
 		"192.168.1.1/31",
-		net.IP{192, 168, 1,1},
+		net.IP{192, 168, 1, 1},
 		net.IP{192, 168, 1, 0},
 		ErrNetworkAddress,
 	},
 	{
 		"192.168.1.0/32",
-		net.IP{192, 168, 1,0},
+		net.IP{192, 168, 1, 0},
 		net.IP{},
 		ErrAddressAtEndOfRange,
 	},
@@ -1053,6 +1053,7 @@ var supernetTests = []struct {
 		"192.168.1.0/24",
 	},
 }
+
 func TestNet_Supernet(t *testing.T) {
 	for _, tt := range supernetTests {
 		_, inet, _ := ParseCIDR(tt.in)
@@ -1080,6 +1081,7 @@ var compareIPTests = []struct {
 	{5, net.IP{44, 1, 0, 0}, -1},
 	{6, net.IP{170, 1, 12, 1}, -1},
 }
+
 func TestCompareIPs(t *testing.T) {
 	a := compareIPTests[8]
 	a1 := []net.IP{}
@@ -1093,7 +1095,7 @@ func TestCompareIPs(t *testing.T) {
 	sort.Sort(ByIP(a1))
 	for _, b := range compareIPTests {
 		if a1[b.pos].String() != b.ipaddr.String() {
-			t.Errorf("Expected %s at position %d, but found %s", b.ipaddr, b.pos, a1[b.pos] )
+			t.Errorf("Expected %s at position %d, but found %s", b.ipaddr, b.pos, a1[b.pos])
 		}
 	}
 }
@@ -1108,6 +1110,7 @@ var compareNetworks = map[int]string{
 	6: "192.168.3.128/25",
 	7: "192.168.4.0/24",
 }
+
 func TestCompareNets(t *testing.T) {
 	a := ByNet{}
 	for _, v := range compareNetworks {
@@ -1124,16 +1127,17 @@ func TestCompareNets(t *testing.T) {
 
 }
 
-var compareCIDR = []struct{
+var compareCIDR = []struct {
 	network string
 	subnet  string
 	result  bool
 }{
-	{ "192.168.0.0/16", "192.168.45.0/24", true },
-	{ "192.168.45.0/24", "192.168.45.0/26", true},
-	{ "192.168.45.0/24", "192.168.46.0/26", false},
-	{ "10.1.1.1/24", "10.0.0.0/8", false },
+	{"192.168.0.0/16", "192.168.45.0/24", true},
+	{"192.168.45.0/24", "192.168.45.0/26", true},
+	{"192.168.45.0/24", "192.168.46.0/26", false},
+	{"10.1.1.1/24", "10.0.0.0/8", false},
 }
+
 func TestNet_ContainsNetwork(t *testing.T) {
 	for _, cidr := range compareCIDR {
 		_, ipn, _ := ParseCIDR(cidr.network)

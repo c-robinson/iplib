@@ -28,7 +28,7 @@ func NewNet(ip net.IP, masklen int) Net {
 	mask := net.CIDRMask(masklen, maskMax)
 	n := net.IPNet{IP: ip.Mask(mask), Mask: mask}
 
-	return Net{ IPNet: n, version: version, length: length}
+	return Net{IPNet: n, version: version, length: length}
 }
 
 // NewNetBetween takes two net.IP's as input and will return the largest
@@ -86,7 +86,7 @@ func ParseCIDR(s string) (net.IP, Net, error) {
 		return ip[12:15], NewNet(ip.To4(), masklen), err
 	}
 
-	return ip, Net{ *ipnet, 6, 16 }, err
+	return ip, Net{*ipnet, 6, 16}, err
 }
 
 // BroadcastAddress returns the broadcast address for the represented network.
@@ -131,7 +131,7 @@ func (n Net) Count4() uint32 {
 	if exp == 0 {
 		return uint32(1) // special handling for /32
 	}
-	return uint32(math.Pow(2, float64(exp)))-2
+	return uint32(math.Pow(2, float64(exp))) - 2
 }
 
 // Count6 returns the total number of usable IP addresses in the represented
@@ -176,7 +176,7 @@ func (n Net) Enumerate(size, offset uint32) []net.IP {
 
 	// size is greater than the number of addresses that can be returned,
 	// adjust the size of the slice but keep going
-	if size > ( count - offset ) || size == 0 {
+	if size > (count-offset) || size == 0 {
 		size = count - offset
 	}
 
@@ -209,7 +209,7 @@ func (n Net) Enumerate(size, offset uint32) []net.IP {
 // FirstAddress returns the first usable address for the represented network
 func (n Net) FirstAddress() net.IP {
 	i, j := n.Mask.Size()
-	if i + 2 > j {
+	if i+2 > j {
 		return n.IP
 	}
 	return NextIP(n.IP)
@@ -302,7 +302,6 @@ func (n Net) Supernet(masklen int) Net {
 	ng := net.IPNet{IP: n.IP.Mask(mask), Mask: mask}
 	return Net{ng, n.version, n.length}
 }
-
 
 // Version returns the version of IP for the enclosed netblock, Either 4 or 6.
 func (n Net) Version() int {

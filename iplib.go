@@ -31,7 +31,7 @@ IPLib assumes this use-case and acts accordingly:
  - FirstAddress() and NetworkAddress() will be equivalent
  - LastAddress() and BroadcastAddress() will be equivalent
 
- */
+*/
 package iplib
 
 import (
@@ -122,7 +122,7 @@ func BigintToIP6(z *big.Int) net.IP {
 
 	// for cases where the resulting []byte isn't long enough
 	if len(b) < 16 {
-		for i := 15 - len(b); i >=0; i-- {
+		for i := 15 - len(b); i >= 0; i-- {
 			b = append([]byte{0}, b...)
 		}
 	}
