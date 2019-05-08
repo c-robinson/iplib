@@ -1,0 +1,13 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:latest
+    working_directory: /go/src/github.com/c-robinson/iplib
+
+    steps:
+      - checkout
+      - run:
+          name: Run unit tests
+          command: |
+            go test -v ./...
