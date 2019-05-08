@@ -7,8 +7,8 @@ IPLib is an extension of the `net.IP` utilities and is intended to make working
 with IP addresses a little bit easier by providing tools to manage blocks of
 addresses. Tools include:
 
-[![Documentation](https://godoc.org/github.com/<username>/<library>?status.svg)](http://godoc.org/github.com/c-robinson/iplib)
-[![Go Report Card](https://goreportcard.com/badge/github.com/<username>/<library>)](https://goreportcard.com/report/github.com/c-robinson/iplib)
+[![Documentation](https://godoc.org/github.com/c-robinson/iplib?status.svg)](http://godoc.org/github.com/c-robinson/iplib)
+[![Go Report Card](https://goreportcard.com/badge/github.com/c-robinson/iplib)](https://goreportcard.com/report/github.com/c-robinson/iplib)
 
 ##### net.IP tools
 
