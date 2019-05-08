@@ -13,8 +13,8 @@ boundaries of the block.
 For the most part IPLib tries to ensure that v4 and v6 addresses are treated
 equally and managed transparently. The one exception is those functions which
 return or require a total as an integer: for these a version-independent
-function is provided and limited to uint32, but there will also be a v4 and
-v6 variant, the v6 function will always take *big.Int and be able to access
+function is provided and limited to uint32, but there are also v4 and
+v6 variants, the v6 function will always take *big.Int and be able to access
 the entire v6 address space. In all cases the version-independent function is
 simply a router between the v4 and v6 functions that internally converts
 uint32 to big.Int when necessary.
@@ -35,12 +35,13 @@ IPLib assumes this use-case and acts accordingly:
 package iplib
 
 import (
-	"errors"
-	"net"
 	"bytes"
 	"encoding/binary"
 	"encoding/hex"
+	"errors"
 	"math/big"
+	"net"
+	"strings"
 )
 
 const (
@@ -128,9 +129,9 @@ func BigintToIP6(z *big.Int) net.IP {
 	return net.IP(b)
 }
 
-// CompareIPs is here for completeness. This is a good way to compare two
-// IP objects. Since it uses bytes.Compare the return value is identical:
-// 0 if a==b, -1 if a<b, 1 if a>b.
+// CompareIPs is just a thin wrapper around bytes.Compare, but is here for
+// completeness as this is a good way to compare two IP objects. Since it uses
+// bytes.Compare the return value is identical: 0 if a==b, -1 if a<b, 1 if a>b
 func CompareIPs(a, b net.IP) int {
 	return bytes.Compare(a.To16(), b.To16())
 }
@@ -241,6 +242,22 @@ func EffectiveVersion(ip net.IP) int {
 	return 4
 }
 
+// ExpandIP6 takes a net.IP containing an IPv6 address and returns a string of
+// the address fully expanded (:: -> 0000:0000:0000:0000:0000:0000:0000:0000)
+func ExpandIP6(ip net.IP) string {
+	var h []byte
+	var s string
+	h = make([]byte, hex.EncodedLen(len(ip.To16())))
+	hex.Encode(h, []byte(ip))
+	for i, c := range h {
+		if i%4 == 0 {
+			s = s + ":"
+		}
+		s = s + string(c)
+	}
+	return s[1:]
+}
+
 // ForceIP4 takes a net.IP containing a 6to4 address and returns only the
 // encapsulated v4 address.
 func ForceIP4(ip net.IP) net.IP {
@@ -248,6 +265,27 @@ func ForceIP4(ip net.IP) net.IP {
 		return ip[12:]
 	}
 	return ip
+}
+
+// HexStringToIP converts a hexadecimal string to an IP address. If the given
+// string cannot be converted nil is returned. Input strings may contain '.'
+// or ':'
+func HexStringToIP(s string) net.IP {
+	normalize := func(c rune) rune {
+		if strings.IndexRune(":.", c) == -1 {
+			return c
+		}
+		return -1
+	}
+	s = strings.Map(normalize, s)
+	if len(s) != 8 && len(s) != 32 {
+		return nil
+	}
+	h, err := hex.DecodeString(s)
+	if err != nil {
+		return nil
+	}
+	return h
 }
 
 // IncrementIPBy returns a net.IP that is greater than the supplied net.IP by

@@ -222,7 +222,7 @@ func (n Net) LastAddress() net.IP {
 	a, ones := n.finalAddress()
 
 	// if it's v6 return the last address
-	if n.version == 6  {
+	if n.version == 6 {
 		return a
 	}
 

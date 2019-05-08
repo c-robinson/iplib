@@ -89,6 +89,16 @@ func TestIPToHexString(t *testing.T) {
 	}
 }
 
+func TestHexStringToIP(t *testing.T) {
+	for _, tt := range IPTests {
+		ip := HexStringToIP(tt.hexval)
+		x := CompareIPs(tt.ipaddr, ip)
+		if x != 0 {
+			t.Errorf("On HexStringToIP(%s) expected %s, got %s", tt.hexval, tt.ipaddr, ip)
+		}
+	}
+}
+
 func TestUint32ToIP4(t *testing.T) {
 	for _, tt := range IPTests {
 		ip := Uint32ToIP4(tt.intval)
@@ -105,6 +115,7 @@ var IP6Tests = []struct {
 	prev   net.IP
 	intval string
 	hexval string
+	expand string
 
 }{
 	{
@@ -113,6 +124,7 @@ var IP6Tests = []struct {
 		net.IP{32,1,13,184,133,163,0,0,0,0,138,46,3,112,115,51},
 		"42540766452641154071740215577757643572",
 		"2001:db8:85a3::8a2e:370:7334",
+		"2001:0db8:85a3:0000:0000:8a2e:0370:7334",
 	},
 	{
 		net.IP{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
@@ -120,12 +132,14 @@ var IP6Tests = []struct {
 		net.IP{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
 		"0",
 		"::",
+		"0000:0000:0000:0000:0000:0000:0000:0000",
 	},
 	{
 		net.IP{255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255},
 		net.IP{255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255},
 		net.IP{255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,254},
 		"340282366920938463463374607431768211455",
+		"ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
 		"ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
 	},
 }
@@ -174,6 +188,15 @@ func TestBigintToIP6(t *testing.T) {
 		x := CompareIPs(ip, tt.ipaddr)
 		if x != 0 {
 			t.Errorf("On BigintToIP6(%s) expected %+v, got %+v", tt.intval, tt.ipaddr, ip)
+		}
+	}
+}
+
+func TestExpandIP6(t *testing.T) {
+	for _, tt := range IP6Tests {
+		s := ExpandIP6(tt.ipaddr)
+		if s != tt.expand {
+			t.Errorf("On ExpandIP6(%s) expected '%s', got '%s'", tt.ipaddr, tt.expand, s)
 		}
 	}
 }
@@ -547,8 +570,8 @@ var NewNetBetweenTests = []struct {
 		nil,
 	},
 	{
-		net.IP{32, 1, 13, 183, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, //net.IP{32, 1, 13, 184, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		net.IP{32, 1, 13, 184, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0}, //net.IP{32, 1, 13, 184, 0, 0, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255},
+		net.IP{32, 1, 13, 183, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255},
+		net.IP{32, 1, 13, 184, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0},
 		"2001:db8::/64",
 		true,
 		nil,
