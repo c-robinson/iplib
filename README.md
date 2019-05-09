@@ -10,6 +10,7 @@ addresses. Tools include:
 [![Documentation](https://godoc.org/github.com/c-robinson/iplib?status.svg)](http://godoc.org/github.com/c-robinson/iplib)
 [![CircleCI](https://circleci.com/gh/c-robinson/iplib/tree/master.svg?style=svg)](https://circleci.com/gh/c-robinson/iplib/tree/master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/c-robinson/iplib)](https://goreportcard.com/report/github.com/c-robinson/iplib)
+[![Coverage Status](https://coveralls.io/repos/github/c-robinson/iplib/badge.svg?branch=master)](https://coveralls.io/github/c-robinson/iplib?branch=master)
 
 ##### net.IP tools
 
