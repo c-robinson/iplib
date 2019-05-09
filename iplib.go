@@ -39,6 +39,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"math/big"
 	"net"
 	"strings"
@@ -339,6 +340,40 @@ func IP4ToUint32(ip net.IP) uint32 {
 
 	i := binary.BigEndian.Uint32(ForceIP4(ip))
 	return i
+}
+
+// IPToARPA takes a net.IP as input and returns a string of the version-
+// appropriate ARPA DNS name
+func IPToARPA(ip net.IP) string {
+	if EffectiveVersion(ip) == 4 {
+		return IP4ToARPA(ip)
+	}
+	return IP6ToARPA(ip)
+}
+
+// IP4ToARPA takes a net.IP containing an IPv4 address and returns a string of
+// the address represented as dotted-decimals in reverse-order and followed by
+// the IPv4 ARPA domain "in-addr.arpa"
+func IP4ToARPA(ip net.IP) string {
+	ip = ForceIP4(ip)
+	return fmt.Sprintf("%d.%d.%d.%d.in-addr.arpa", ip[3], ip[2], ip[1], ip[0])
+}
+
+// IP6ToARPA takes a net.IP containing an IPv6 address and returns a string of
+// the address represented as a sequence of 4-bit nibbles in reverse order and
+// followed by the IPv6 ARPA domain "ip6.arpa". '2001:db8::1' is rendered as:
+// "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa"
+func IP6ToARPA(ip net.IP) string {
+	var domain = "ip6.arpa"
+	var h []byte
+	var s string
+	h = make([]byte, hex.EncodedLen(len(ip)))
+	hex.Encode(h, []byte(ip))
+
+	for i := len(h)-1; i >= 0 ; i-- {
+		s = s + string(h[i]) + "."
+	}
+	return s + domain
 }
 
 // IPToBigint converts a net.IP to big.Int.

@@ -14,6 +14,7 @@ var IPTests = []struct {
 	prev   net.IP
 	intval uint32
 	hexval string
+	inarpa string
 }{
 	{
 		net.IP{10, 1, 2, 3},
@@ -21,6 +22,7 @@ var IPTests = []struct {
 		net.IP{10, 1, 2, 2},
 		167838211,
 		"0a010203",
+		"3.2.1.10.in-addr.arpa",
 	},
 	{
 		net.IP{10, 1, 2, 255},
@@ -28,6 +30,7 @@ var IPTests = []struct {
 		net.IP{10, 1, 2, 254},
 		167838463,
 		"0a0102ff",
+		"255.2.1.10.in-addr.arpa",
 	},
 	{
 		net.IP{10, 1, 2, 0},
@@ -35,6 +38,7 @@ var IPTests = []struct {
 		net.IP{10, 1, 1, 255},
 		167838208,
 		"0a010200",
+		"0.2.1.10.in-addr.arpa",
 	},
 	{
 		net.IP{255, 255, 255, 255},
@@ -42,6 +46,7 @@ var IPTests = []struct {
 		net.IP{255, 255, 255, 254},
 		4294967295,
 		"ffffffff",
+		"255.255.255.255.in-addr.arpa",
 	},
 	{
 		net.IP{0, 0, 0, 0},
@@ -49,6 +54,7 @@ var IPTests = []struct {
 		net.IP{0, 0, 0, 0},
 		0,
 		"00000000",
+		"0.0.0.0.in-addr.arpa",
 	},
 }
 
@@ -108,6 +114,15 @@ func TestUint32ToIP4(t *testing.T) {
 	}
 }
 
+func TestIP4ToARPA(t *testing.T) {
+	for _, tt := range IPTests {
+		s := IPToARPA(tt.ipaddr)
+		if s != tt.inarpa {
+			t.Errorf("On IP4ToARPA(%s) expected %s, got %s", tt.ipaddr, tt.inarpa, s)
+		}
+	}
+}
+
 var IP6Tests = []struct {
 	ipaddr net.IP
 	next   net.IP
@@ -115,6 +130,7 @@ var IP6Tests = []struct {
 	intval string
 	hexval string
 	expand string
+	inarpa string
 }{
 	{
 		net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 46, 3, 112, 115, 52},
@@ -123,6 +139,7 @@ var IP6Tests = []struct {
 		"42540766452641154071740215577757643572",
 		"2001:db8:85a3::8a2e:370:7334",
 		"2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+		"4.3.3.7.0.7.3.0.e.2.a.8.0.0.0.0.0.0.0.0.3.a.5.8.8.b.d.0.1.0.0.2.ip6.arpa",
 	},
 	{
 		net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -131,6 +148,7 @@ var IP6Tests = []struct {
 		"0",
 		"::",
 		"0000:0000:0000:0000:0000:0000:0000:0000",
+		"0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa",
 	},
 	{
 		net.IP{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255},
@@ -139,6 +157,7 @@ var IP6Tests = []struct {
 		"340282366920938463463374607431768211455",
 		"ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
 		"ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+		"f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.ip6.arpa",
 	},
 }
 
@@ -195,6 +214,15 @@ func TestExpandIP6(t *testing.T) {
 		s := ExpandIP6(tt.ipaddr)
 		if s != tt.expand {
 			t.Errorf("On ExpandIP6(%s) expected '%s', got '%s'", tt.ipaddr, tt.expand, s)
+		}
+	}
+}
+
+func TestIP6ToARPA(t *testing.T) {
+	for _, tt := range IP6Tests {
+		s := IPToARPA(tt.ipaddr)
+		if s != tt.inarpa {
+			t.Errorf("On IP4ToARPA(%s) expected %s, got %s", tt.ipaddr, tt.inarpa, s)
 		}
 	}
 }
