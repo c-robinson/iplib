@@ -13,6 +13,7 @@ present in this library.
 The data-set for the IANA registries is available from:
 
 - https://www.iana.org/assignments/iana-ipv4-special-registry/iana-ipv4-special-registry.xhtml
+
 - https://www.iana.org/assignments/iana-ipv6-special-registry/iana-ipv6-special-registry.xhtml
 */
 package iana
@@ -152,7 +153,10 @@ func GetRFCsForNetwork(n iplib.Net) []string {
 }
 
 // IsForwardable will return false if the given iplib.Net contains or is
-// contained in a network that is marked not-forwardable in the IANA registry
+// contained in a network that is marked not-forwardable in the IANA registry.
+// IANA defines a forwardable network as one where "...a router may forward an
+// IP datagram whose destination address is drawn from the allocated special-
+// purpose address block between external interfaces." The default is 'true'
 func IsForwardable(n iplib.Net) bool {
 	reservations := GetReservationsForNetwork(n)
 	for _, r := range reservations {
@@ -164,7 +168,10 @@ func IsForwardable(n iplib.Net) bool {
 }
 
 // IsGlobal will return false if the given iplib.Net contains or is contained
-// in a network that is marked not-global in the IANA registry
+// in a network that is marked not-global in the IANA registry. IANA defines a
+// global network as one where "...an IP datagram whose destination address is
+// drawn from the allocated special-purpose address block is forwardable
+// beyond a specified administrative domain." The default is 'true'
 func IsGlobal(n iplib.Net) bool {
 	reservations := GetReservationsForNetwork(n)
 	for _, r := range reservations {
@@ -177,7 +184,10 @@ func IsGlobal(n iplib.Net) bool {
 
 // IsReserved  will return true if the given iplib.Net contains or is
 // contained in a network that is marked reserved-by-protocol in the IANA
-// registry
+// registry. IANA defines a reserved network as one where "...the RFC that
+// created the special-purpose address block requires all compliant IP
+// implementations to behave in a special way when processing packets either
+// to or from addresses contained by the address block." The default is 'false'
 func IsReserved(n iplib.Net) bool {
 	reservations := GetReservationsForNetwork(n)
 	for _, r := range reservations {
