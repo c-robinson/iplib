@@ -7,9 +7,9 @@ import (
 )
 
 var IPTests = []struct {
-	name		string
-	address     string
-	resCount	int
+	name     string
+	address  string
+	resCount int
 }{
 	{
 		"NotReservedv4",
@@ -47,13 +47,13 @@ func TestGetReservationsForIP(t *testing.T) {
 }
 
 var NetTests = []struct {
-	name            string
-	resCount        int
-	network         string
-	rfcList         []string
-	valForwardable  bool
-	valGlobal       bool
-	valReserved     bool
+	name           string
+	resCount       int
+	network        string
+	rfcList        []string
+	valForwardable bool
+	valGlobal      bool
+	valReserved    bool
 }{
 	{
 		"NotReservedv4",
@@ -166,7 +166,7 @@ func TestGetRFCsForNetwork(t *testing.T) {
 		_, n, _ := iplib.ParseCIDR(tt.network)
 		rfclist := GetRFCsForNetwork(n)
 		if v := equalList(rfclist, tt.rfcList); v != true {
-			t.Errorf("'%s' (%s) expected %v, got %v", tt.name, tt.network, tt.rfcList, rfclist )
+			t.Errorf("'%s' (%s) expected %v, got %v", tt.name, tt.network, tt.rfcList, rfclist)
 		}
 	}
 }
