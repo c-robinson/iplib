@@ -259,8 +259,8 @@ func ExpandIP6(ip net.IP) string {
 	return s[1:]
 }
 
-// ForceIP4 takes a net.IP containing a 6to4 address and returns only the
-// encapsulated v4 address.
+// ForceIP4 takes a net.IP containing an RFC4291 IPv4-mapped IPv6 address and
+// returns only the encapsulated v4 address.
 func ForceIP4(ip net.IP) net.IP {
 	if len(ip) == 16 {
 		return ip[12:]

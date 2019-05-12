@@ -29,7 +29,8 @@ Some simple tools for performing common tasks against IP objects:
 - Print v4 as a hexadecimal string
 - Print v6 in fully expanded form
 - Convert between net.IP, integer and hexadecimal
-- Get the version of a v4 address or force a 6to4 address to be a v4 address
+- Get the version of a v4 address or force a IPv4-mapped IPv6address to be a 
+  v4 address
 
 ##### iplib.IPNet
 
@@ -43,11 +44,17 @@ An enhancement of `net.IPNet` providing features such as:
 - Find free space between allocated subnets
 - Expand subnets if space allows
 
-#### Using IPLib
+## Installing
+
+```sh
+go get -u github.com/c-robinson/iplib
+```
+
+## Using IPLib
 
 There are a series of functions for working with v4 or v6 `net.IP` objects:
 
-```Go
+```go
 package main
 
 import (
@@ -85,7 +92,7 @@ are just lowest-common wrappers around IPv4- or IPv6-specific functions. The
 IPv6-specific variants use `big.Int` so they can access the entire v6 space:
 
 
-```Go
+```go
 package main
 
 import (
@@ -124,7 +131,7 @@ func main() {
 
 To work with networks simply create an `iplib.IPNet` object:
 
-```Go
+```go
 package main
 
 import (

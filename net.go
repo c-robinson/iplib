@@ -73,9 +73,9 @@ func NewNetBetween(a, b net.IP) (Net, bool, error) {
 // and will return any error it generates to the caller. There is one major
 // difference between how net.IPNet manages addresses and how ipnet.Net does,
 // and this function exposes it: net.ParseCIDR *always* returns an IPv6
-// address; if given a v4 address it returns the 6to4 encapsulation address
-// internally, but treats it like v4 in practice. In contrast iplib.ParseCIDR
-// will re-encode it as a v4
+// address; if given a v4 address it returns the RFC4291 IPv4-mapped IPv6
+// address internally, but treats it like v4 in practice. In contrast
+// iplib.ParseCIDR will re-encode it as a v4
 func ParseCIDR(s string) (net.IP, Net, error) {
 	ip, ipnet, err := net.ParseCIDR(s)
 	if err != nil {
