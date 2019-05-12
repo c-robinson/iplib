@@ -75,6 +75,7 @@ func main() {
 
 	fmt.Println(iplib.IP4ToUint32(ipa))      // 3232235777
 	ipd := iplib.Uint32ToIP4(iplib.IP4ToUint32(ipa)+20) // ipd is 192.168.1.21
+	fmt.Println(iplib.IP4ToARPA(ipa))        // 1.1.168.192.in-addr.arpa
 }
 ```
 
@@ -116,6 +117,7 @@ func main() {
 	ipd := iplib.IncrementIP6By(ipa, m)      // ipd is 2001:db8::1:0:0
 
 	fmt.Println(iplib.DeltaIP6(ipb, ipd))    // 4294967274
+	fmt.Println(iplib.IP6ToARPA(ipa))        // 1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa
 }
 
 ```
