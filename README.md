@@ -40,9 +40,7 @@ An enhancement of `net.IPNet` providing features such as:
 - Get the network, broadcast, first and last usable addresses
 - Increment or decrement an address within the boundaries of a netblock
 - Enumerate all or part of a netblock to `[]net.IP`
-- Allocate subnets
-- Find free space between allocated subnets
-- Expand subnets if space allows
+- Allocate subnets and supernets
 
 ## Installing
 
@@ -81,6 +79,7 @@ func main() {
 	sort.Sort(iplib.ByIP(iplist))            // []net.IP{ipa, ipc, ipb}
 
 	fmt.Println(iplib.IP4ToUint32(ipa))      // 3232235777
+	fmt.Println(iplib.IPToBinaryString(ipa))  // 11000000.10101000.00000001.00000001
 	ipd := iplib.Uint32ToIP4(iplib.IP4ToUint32(ipa)+20) // ipd is 192.168.1.21
 	fmt.Println(iplib.IP4ToARPA(ipa))        // 1.1.168.192.in-addr.arpa
 }
@@ -116,6 +115,7 @@ func main() {
     
 	fmt.Println(iplib.ExpandIP6(ipa))        // "2001:0db8:0000:0000:0000:0000:0000:0001"
 	fmt.Println(iplib.IPToBigint(ipa))       // 42540766411282592856903984951653826561 
+	fmt.Println(iplib.IPToBinaryString(ipa)) // 00100000.00000001.00001101.10111000.00000000.00000000.00000000.00000000.00000000.00000000.00000000.00000000.00000000.00000000.00000000.00000001
     
 	iplist := []net.IP{ ipb, ipc, ipa }
 	sort.Sort(iplib.ByIP(iplist))            // []net.IP{ipa, ipc, ipb}
@@ -188,4 +188,25 @@ func main() {
 }
 ```
 
-TODO: add subnetting functions
+`iplib.IPNet` objects can be used to generate subnets and supernets:
+
+```go
+package main
+
+import (
+	"fmt"
+	
+	"github.com/c-robinson/iplib"
+)
+
+func main() {
+    _, ipna, _ := iplib.ParseCIDR("192.168.4.0/22")
+    fmt.Println(ipna.Subnet(24))   // []iplib.Net{ 192.168.4.0/24, 192.168.5.0/24, 
+                                   //              192.168.6.0/24, 192.168.7.0/24 }
+    ipnb, err := ipna.Supernet(21) // 192.168.0.0/21
+    
+    ipnc := ipna.PreviousNet(21)   // 192.168.0.0/21
+    
+    ipnd := ipna.NextNet(21)       // 192.168.8.0/21
+}
+```

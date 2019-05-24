@@ -17,7 +17,7 @@ type Net struct {
 // NewNet returns a new Net object containing ip at the specified masklen.
 func NewNet(ip net.IP, masklen int) Net {
 	var maskMax, length int
-	version := Version(ip)
+	version := EffectiveVersion(ip)
 	if version == 6 {
 		maskMax = 128
 		length = 16
@@ -48,12 +48,12 @@ func NewNetBetween(a, b net.IP) (Net, bool, error) {
 	}
 
 	maskMax := 128
-	if Version(a) == 4 {
+	if EffectiveVersion(a) == 4 {
 		maskMax = 32
 	}
 
 	ipa := NextIP(a)
-	ipb := PrevIP(b)
+	ipb := PreviousIP(b)
 	for i := 1; i <= maskMax; i++ {
 		xnet := NewNet(ipa, i)
 
@@ -208,6 +208,9 @@ func (n Net) Enumerate(size, offset uint32) []net.IP {
 
 // FirstAddress returns the first usable address for the represented network
 func (n Net) FirstAddress() net.IP {
+	if n.version == 6 {
+		return n.IP
+	}
 	i, j := n.Mask.Size()
 	if i+2 > j {
 		return n.IP
@@ -231,7 +234,7 @@ func (n Net) LastAddress() net.IP {
 		return a
 	}
 
-	return PrevIP(a)
+	return PreviousIP(a)
 }
 
 // NetworkAddress returns the network address for the represented network, e.g.
@@ -246,7 +249,7 @@ func (n Net) NetworkAddress() net.IP {
 // is out of range it will return an empty net.IP and an ErrAddressAtEndOfRange.
 // If the result is the broadcast address, the address _will_ be returned, but
 // so will an ErrBroadcastAddress, to indicate that the address is technically
-// outside the usable scope.
+// outside the usable scope
 func (n Net) NextIP(ip net.IP) (net.IP, error) {
 	if !n.Contains(ip) {
 		return net.IP{}, ErrAddressOutOfRange
@@ -256,42 +259,93 @@ func (n Net) NextIP(ip net.IP) (net.IP, error) {
 		return net.IP{}, ErrAddressAtEndOfRange
 	}
 	// if this is the broadcast address, return it but warn the caller via error
-	if n.BroadcastAddress().Equal(xip) {
+	if n.BroadcastAddress().Equal(xip) && n.version == 4 {
 		return xip, ErrBroadcastAddress
 	}
 	return xip, nil
 }
 
+// NextNet takes a CIDR mask-size as an argument and attempts to create a new
+// Net object just after the current Net, at the requested mask length
+func (n Net) NextNet(masklen int) Net {
+	return NewNet(NextIP(n.BroadcastAddress()), masklen)
+}
+
 // PreviousIP takes a net.IP as an argument and attempts to decrement it by
 // one. If the input is outside of the range of the represented network it will
 // return an empty net.IP and an ErrAddressOutOfRange. If the resulting address
-// is out of range it will return an empty net.IP and an ErrAddressAtEndOfRange.
+// is out of range it will return an empty net.IP and ErrAddressAtEndOfRange.
 // If the result is the network address, the address _will_ be returned, but
 // so will an ErrNetworkAddress, to indicate that the address is technically
-// outside the usable scope.
+// outside the usable scope
 func (n Net) PreviousIP(ip net.IP) (net.IP, error) {
 	if !n.Contains(ip) {
 		return net.IP{}, ErrAddressOutOfRange
 	}
-	xip := PrevIP(ip)
+	xip := PreviousIP(ip)
 	if !n.Contains(xip) {
 		return net.IP{}, ErrAddressAtEndOfRange
 	}
 	// if this is the network address, return it but warn the caller via error
-	if n.NetworkAddress().Equal(xip) {
+	if n.NetworkAddress().Equal(xip) && n.version == 4 {
 		return xip, ErrNetworkAddress
 	}
 	return xip, nil
 }
 
+// PreviousNet takes a CIDR mask-size as an argument and creates a new Net
+// object just before the current one, at the requested mask length. If the
+// specified mask is for a larger network than the current one then the new
+// network may encompass the current one, e.g.:
+//
+// iplib.Net{192.168.4.0/22}.Subnet(21) -> 192.168.0.0/21
+//
+// In the above case 192.168.4.0/22 is part of 192.168.0.0/21
+func (n Net) PreviousNet(masklen int) Net {
+	return NewNet(PreviousIP(n.NetworkAddress()), masklen)
+}
+
+// Subnet takes a CIDR mask-size as an argument and carves the current Net
+// object into subnets of that size, returning them as a []Net. The mask
+// provided must be a larger-integer than the current mask. If set to 0 Subnet
+// will carve the network in half
+//
+// Examples:
+// Net{192.168.1.0/24}.Subnet(0)  -> []Net{192.168.1.0/25, 192.168.1.128/25}
+// Net{192.168.1.0/24}.Subnet(26) -> []Net{192.168.1.0/26, 192.168.1.64/26
+//                                         192.168.1.128/26, 192.168.1.192/26}
+func (n Net) Subnet(masklen int) ([]Net, error) {
+	ones, all := n.Mask.Size()
+	if ones > masklen {
+		return nil, ErrBadMaskLength
+	}
+
+	if masklen == 0 {
+		masklen = ones + 1
+	}
+
+	mask := net.CIDRMask(masklen, all)
+	netlist := []Net{{net.IPNet{n.NetworkAddress(), mask}, n.version, n.length}}
+
+	for CompareIPs(netlist[len(netlist)-1].BroadcastAddress(), n.BroadcastAddress()) == -1 {
+		ng := net.IPNet{IP: NextIP(netlist[len(netlist)-1].BroadcastAddress()), Mask: mask}
+		netlist = append(netlist, Net{ng, n.version, n.length})
+	}
+	return netlist, nil
+}
+
 // Supernet takes a CIDR mask-size as an argument and returns a Net object
 // containing the supernet of the current Net at the requested mask length.
 // The mask provided must be a smaller-integer than the current mask. If set
-// to 0 Supernet will return the next-largest network.
-func (n Net) Supernet(masklen int) Net {
+// to 0 Supernet will return the next-largest network
+//
+// Examples:
+// Net{192.168.1.0/24}.Supernet(0)  -> Net{192.168.0.0/23}
+// Net{192.168.1.0/24}.Supernet(22) -> Net{Net{192.168.0.0/22}
+func (n Net) Supernet(masklen int) (Net, error) {
 	ones, all := n.Mask.Size()
 	if ones < masklen {
-		return n
+		return Net{}, ErrBadMaskLength
 	}
 
 	if masklen == 0 {
@@ -300,7 +354,7 @@ func (n Net) Supernet(masklen int) Net {
 
 	mask := net.CIDRMask(masklen, all)
 	ng := net.IPNet{IP: n.IP.Mask(mask), Mask: mask}
-	return Net{ng, n.version, n.length}
+	return Net{ng, n.version, n.length}, nil
 }
 
 // Version returns the version of IP for the enclosed netblock, Either 4 or 6.

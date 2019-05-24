@@ -15,6 +15,7 @@ var IPTests = []struct {
 	intval uint32
 	hexval string
 	inarpa string
+	binval string
 }{
 	{
 		net.IP{10, 1, 2, 3},
@@ -23,6 +24,7 @@ var IPTests = []struct {
 		167838211,
 		"0a010203",
 		"3.2.1.10.in-addr.arpa",
+		"00001010.00000001.00000010.00000011",
 	},
 	{
 		net.IP{10, 1, 2, 255},
@@ -31,6 +33,7 @@ var IPTests = []struct {
 		167838463,
 		"0a0102ff",
 		"255.2.1.10.in-addr.arpa",
+		"00001010.00000001.00000010.11111111",
 	},
 	{
 		net.IP{10, 1, 2, 0},
@@ -39,6 +42,7 @@ var IPTests = []struct {
 		167838208,
 		"0a010200",
 		"0.2.1.10.in-addr.arpa",
+		"00001010.00000001.00000010.00000000",
 	},
 	{
 		net.IP{255, 255, 255, 255},
@@ -47,6 +51,7 @@ var IPTests = []struct {
 		4294967295,
 		"ffffffff",
 		"255.255.255.255.in-addr.arpa",
+		"11111111.11111111.11111111.11111111",
 	},
 	{
 		net.IP{0, 0, 0, 0},
@@ -55,6 +60,7 @@ var IPTests = []struct {
 		0,
 		"00000000",
 		"0.0.0.0.in-addr.arpa",
+		"00000000.00000000.00000000.00000000",
 	},
 }
 
@@ -69,9 +75,9 @@ func TestNextIP(t *testing.T) {
 
 func TestPrevIP(t *testing.T) {
 	for _, tt := range IPTests {
-		x := CompareIPs(tt.prev, PrevIP(tt.ipaddr))
+		x := CompareIPs(tt.prev, PreviousIP(tt.ipaddr))
 		if x != 0 {
-			t.Errorf("On PrevIP(%+v) expected %+v, got %+v", tt.ipaddr, tt.prev, PrevIP(tt.ipaddr))
+			t.Errorf("On PreviousIP(%+v) expected %+v, got %+v", tt.ipaddr, tt.prev, PreviousIP(tt.ipaddr))
 		}
 	}
 }
@@ -90,6 +96,15 @@ func TestIPToHexString(t *testing.T) {
 		s := IPToHexString(tt.ipaddr)
 		if s != tt.hexval {
 			t.Errorf("On IPToHexString(%+v) expected %s, got %s", tt.ipaddr, tt.hexval, s)
+		}
+	}
+}
+
+func TestIPToBinaryString(t *testing.T) {
+	for _, tt := range IPTests {
+		s := IPToBinaryString(tt.ipaddr)
+		if s != tt.binval {
+			t.Errorf("On IPToBinaryString(%+v) expected %s, got %s", tt.ipaddr, tt.binval, s)
 		}
 	}
 }
@@ -131,6 +146,7 @@ var IP6Tests = []struct {
 	hexval string
 	expand string
 	inarpa string
+	binval string
 }{
 	{
 		net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 46, 3, 112, 115, 52},
@@ -140,6 +156,7 @@ var IP6Tests = []struct {
 		"2001:db8:85a3::8a2e:370:7334",
 		"2001:0db8:85a3:0000:0000:8a2e:0370:7334",
 		"4.3.3.7.0.7.3.0.e.2.a.8.0.0.0.0.0.0.0.0.3.a.5.8.8.b.d.0.1.0.0.2.ip6.arpa",
+		"00100000.00000001.00001101.10111000.10000101.10100011.00000000.00000000.00000000.00000000.10001010.00101110.00000011.01110000.01110011.00110100",
 	},
 	{
 		net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -149,6 +166,7 @@ var IP6Tests = []struct {
 		"::",
 		"0000:0000:0000:0000:0000:0000:0000:0000",
 		"0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa",
+		"00000000.00000000.00000000.00000000.00000000.00000000.00000000.00000000.00000000.00000000.00000000.00000000.00000000.00000000.00000000.00000000",
 	},
 	{
 		net.IP{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255},
@@ -158,6 +176,7 @@ var IP6Tests = []struct {
 		"ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
 		"ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
 		"f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.f.ip6.arpa",
+		"11111111.11111111.11111111.11111111.11111111.11111111.11111111.11111111.11111111.11111111.11111111.11111111.11111111.11111111.11111111.11111111",
 	},
 }
 
@@ -172,9 +191,9 @@ func TestNextIP6(t *testing.T) {
 
 func TestPrevIP6(t *testing.T) {
 	for _, tt := range IP6Tests {
-		x := CompareIPs(tt.prev, PrevIP(tt.ipaddr))
+		x := CompareIPs(tt.prev, PreviousIP(tt.ipaddr))
 		if x != 0 {
-			t.Errorf("On IPv6 PrevIP(%+v) expected %+v, got %+v", tt.ipaddr, tt.prev, PrevIP(tt.ipaddr))
+			t.Errorf("On IPv6 PreviousIP(%+v) expected %+v, got %+v", tt.ipaddr, tt.prev, PreviousIP(tt.ipaddr))
 		}
 	}
 }
@@ -184,6 +203,15 @@ func TestIP6ToBigint(t *testing.T) {
 		i := IPToBigint(tt.ipaddr)
 		if i.String() != tt.intval {
 			t.Errorf("On IPToBigint(%+v) expected %s, got %v", tt.ipaddr, tt.intval, i)
+		}
+	}
+}
+
+func TestIP6ToBinaryString(t *testing.T) {
+	for _, tt := range IP6Tests {
+		s := IPToBinaryString(tt.ipaddr)
+		if s != tt.binval {
+			t.Errorf("On IPv6 IPToBinaryString(%+v) expected %s, got %s", tt.ipaddr, tt.binval, s)
 		}
 	}
 }
@@ -733,7 +761,7 @@ var NetworkTests = []struct {
 		net.IPMask{255, 255, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0},
 		net.IPMask{},
 		net.IP{},
-		net.IP{32, 1, 13, 184, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+		net.IP{32, 1, 13, 184, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		net.IP{32, 1, 13, 184, 0, 0, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255},
 		6,
 		"18446744073709551616",
@@ -1050,42 +1078,116 @@ func TestNet_PreviousIP(t *testing.T) {
 	}
 }
 
+var subnetTests = []struct {
+	in       string
+	prevmask int
+	prevnet  string
+	nextmask int
+	nextnet  string
+	submask  int
+	subnets  []string
+}{
+	{
+		"192.168.0.0/24",
+		24,
+		"192.167.255.0/24",
+		24,
+		"192.168.1.0/24",
+		26,
+		[]string{"192.168.0.0/26", "192.168.0.64/26", "192.168.0.128/26", "192.168.0.192/26"},
+	},
+	{
+		"2001:db8::/62",
+		62,
+		"2001:db7:ffff:fffc::/62",
+		62,
+		"2001:db8:0:4::/62",
+		64,
+		[]string{"2001:db8::/64", "2001:db8:0:1::/64", "2001:db8:0:2::/64", "2001:db8:0:3::/64"},
+	},
+}
+
+func TestNet_Subnet(t *testing.T) {
+	for _, tt := range subnetTests {
+		_, inet, _ := ParseCIDR(tt.in)
+		subnets, _ := inet.Subnet(tt.submask)
+		v := compareNetArraysToStringRepresentation(subnets, tt.subnets)
+		if v == false {
+			t.Errorf("On Net{%s}.Subnet(%d) expected %v got %v", tt.in, tt.submask, tt.subnets, subnets)
+		}
+	}
+}
+
+func TestNet_SubnetBadMasklen(t *testing.T) {
+	_, inet, _ := ParseCIDR("192.168.1.0/24")
+	_, err := inet.Subnet(23)
+	if err == nil {
+		t.Error("Net{192.168.1.0/24}.Subnet(23) expected error, but got none")
+	}
+}
+
+func  TestNet_PreviousNet(t *testing.T) {
+	for _, tt := range subnetTests {
+		_, inet, _ := ParseCIDR(tt.in)
+		_, pneta, _ := ParseCIDR(tt.prevnet)
+
+		pnetb := inet.PreviousNet(tt.prevmask)
+
+		if CompareNets(pneta, pnetb) != 0 {
+			t.Errorf("On Net{%s}.PreviousNet(%d) expected %s got %s", tt.in, tt.prevmask, tt.prevnet, pneta.String())
+		}
+	}
+}
+
+func  TestNet_NextNet(t *testing.T) {
+	for _, tt := range subnetTests {
+		_, inet, _ := ParseCIDR(tt.in)
+		_, pneta, _ := ParseCIDR(tt.nextnet)
+
+		pnetb := inet.NextNet(tt.nextmask)
+
+		if CompareNets(pneta, pnetb) != 0 {
+			t.Errorf("On Net{%s}.NextNet(%d) expected %s got %s", tt.in, tt.nextmask, tt.nextnet, pneta.String())
+		}
+	}
+}
+
 var supernetTests = []struct {
 	in      string
 	masklen int
 	out     string
+	err     error
 }{
-	{
-		"192.168.1.0/24",
-		25,
-		"192.168.1.0/24",
-	},
 	{
 		"192.168.1.0/24",
 		23,
 		"192.168.0.0/23",
+		nil,
 	},
 	{
 		"192.168.1.0/24",
 		0,
 		"192.168.0.0/23",
+		nil,
 	},
 	{
 		"192.168.1.0/24",
 		22,
 		"192.168.0.0/22",
+		nil,
 	},
 	{
 		"192.168.1.4/30",
 		24,
 		"192.168.1.0/24",
+		nil,
 	},
 }
 
 func TestNet_Supernet(t *testing.T) {
 	for _, tt := range supernetTests {
 		_, inet, _ := ParseCIDR(tt.in)
-		onet := inet.Supernet(tt.masklen)
+		onet, _ := inet.Supernet(tt.masklen)
 		if onet.String() != tt.out {
 			t.Errorf("On Net{%s}.Supernet(%d) expected %s got %s", tt.in, tt.masklen, tt.out, onet.String())
 		}
@@ -1175,4 +1277,18 @@ func TestNet_ContainsNetwork(t *testing.T) {
 			t.Errorf("For \"%s contains %s\" expected %v got %v", cidr.network, cidr.subnet, cidr.result, result)
 		}
 	}
+}
+
+func compareNetArraysToStringRepresentation(a []Net, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i, n := range a {
+		if n.String() != b[i] {
+			return false
+		}
+	}
+
+	return true
 }

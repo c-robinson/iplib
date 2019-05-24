@@ -53,6 +53,7 @@ const (
 var (
 	ErrAddressAtEndOfRange = errors.New("proposed operation would cause address to exit block")
 	ErrAddressOutOfRange   = errors.New("the given IP address is not a part of this netblock")
+	ErrBadMaskLength       = errors.New("illegal mask length provided")
 	ErrBroadcastAddress    = errors.New("address is the broadcast address of this netblock (and not considered usable)")
 	ErrNetworkAddress      = errors.New("address is the network address of this netblock (and not considered usable)")
 	ErrNoValidRange        = errors.New("no netblock can be found between the supplied values")
@@ -323,6 +324,18 @@ func IncrementIP6By(ip net.IP, count *big.Int) net.IP {
 	return BigintToIP6(z)
 }
 
+// IPToBinaryString returns the given net.IP as a binary string
+func IPToBinaryString(ip net.IP) string {
+	var sa []string
+	if len(ip) > 4 && EffectiveVersion(ip) == 4 {
+		ip = ForceIP4(ip)
+	}
+	for _, b := range ip {
+		sa = append(sa, fmt.Sprintf("%08b", b))
+	}
+	return strings.Join(sa, ".")
+}
+
 // IPToHexString returns the given net.IP as a hexadecimal string. This is the
 // default stringer format for v6 net.IP
 func IPToHexString(ip net.IP) string {
@@ -370,7 +383,7 @@ func IP6ToARPA(ip net.IP) string {
 	h = make([]byte, hex.EncodedLen(len(ip)))
 	hex.Encode(h, []byte(ip))
 
-	for i := len(h)-1; i >= 0 ; i-- {
+	for i := len(h) - 1; i >= 0; i-- {
 		s = s + string(h[i]) + "."
 	}
 	return s + domain
@@ -389,7 +402,7 @@ func IPToBigint(ip net.IP) *big.Int {
 // benchmarks doing so, as well as iterating over the entire v4 address space.
 func NextIP(ip net.IP) net.IP {
 	var ipn []byte
-	if Version(ip) == 4 {
+	if EffectiveVersion(ip) == 4 {
 		ipn = make([]byte, 4)
 		copy(ipn, ip)
 	} else {
@@ -406,13 +419,13 @@ func NextIP(ip net.IP) net.IP {
 	return ip // if we're already at the end of range, don't wrap
 }
 
-// PrevIP returns a net.IP decremented by one from the input address. This
+// PreviousIP returns a net.IP decremented by one from the input address. This
 // function is roughly as fast for v4 as DecrementIP4By(1) but is consistently
 // 4x faster on v6 than DecrementIP6By(1). The bundled tests provide
 // benchmarks doing so, as well as iterating over the entire v4 address space.
-func PrevIP(ip net.IP) net.IP {
+func PreviousIP(ip net.IP) net.IP {
 	var ipn []byte
-	if Version(ip) == 4 {
+	if EffectiveVersion(ip) == 4 {
 		ipn = make([]byte, 4)
 		copy(ipn, ip.To4())
 	} else {

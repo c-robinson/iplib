@@ -69,6 +69,30 @@ func BenchmarkIncrementIPBy_v6(b *testing.B) {
 	}
 }
 
+func BenchmarkNet_Subnet_v4(b *testing.B) {
+	_, n, _ := ParseCIDR("192.168.0.0/24")
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = n.Subnet(25)
+	}
+}
+
+func BenchmarkNet_Subnet_v6(b *testing.B) {
+	_, n, _ := ParseCIDR("2001:db8::/98")
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = n.Subnet(99)
+	}
+}
+
+func BenchmarkNewNetBetween_v4(b *testing.B) {
+	ipa := net.IP{10, 0, 0, 0}
+	ipb := net.IP{10, 0, 0, 255}
+	for i := 0; i < b.N; i++ {
+		_, _, _ = NewNetBetween(ipa, ipb)
+	}
+}
+
 // Sorry for  abusing the benchmark suite here, i just think it's kind of neat
 // to see how quickly one can allocate the entire v4 space in a Go application
 func BenchmarkNextIP_EntireV4Space(b *testing.B) {
