@@ -1,13 +1,12 @@
-### Ideas for future release
-
+## Ideas for future release
 This document is an informal roadmap for `iplib`.
 
-##### Standardize output
+#### Standardize output
 Both for `net` and `iplib` stringified outputs can vary: sometimes punctuation
 or separators are used and other times they are not. Each output format should
 have a canonical output format and some way to (non)prettify it.
 
-##### Net.PreviousNetWithoutOverlap()
+#### Net.PreviousNetWithoutOverlap()
 Depending on what `Net`s netmask is and what the proposed netmask for the new
 object is, `PreviousNet()` might return a network that overlaps the current
 one. This is fine but there should be an explicit function (or parameter to
@@ -15,21 +14,21 @@ the existing function) to force `PreviousNet()` to return a new network in an
 entirely separate address-space, even if this means the two are not actually
 adjacent.
 
-### Net.PreviousNetAtBestSize()
+#### Net.PreviousNetAtBestSize()
 In-line with above there should be a function, or a way to tell the existing
 function, to create a new object that is directly adjacent to it at whatever
 the netmask has to be to do that (perhaps `Net.PreviousNet(0)`).
 
-##### NewNetBetween is terrible
+#### NewNetBetween is terrible
 Pretty much that. If the problems with `PreviousNet()` are solved it probably
 provides a fix for this as well.
 
-##### Tests have gotten out of hand
+#### Tests have gotten out of hand
 Always added to, never refactored. They need to be refactored. Also should try
 to standardize what they want to test (beginning, middle, end of normal range
 and beginning, end of address space).
 
-##### IPv6-specific functions
+#### IPv6-specific functions
 There's a lot of handling for v4-specific needs (broadcast address, next/prev
 IP) but almost none for IPv6's new concerns and that should be fixed. Ideas
 include:
@@ -48,11 +47,11 @@ include:
 
 - functions for allocating /64s as if they were IPs as per [RFC7934 section 6](https://tools.ietf.org/html/rfc7934#section-6)
 
-##### RFC1918
+#### RFC1918
 The most important address-space on the (IPv4) internet is the RFC1918 private
 address block designation that is effectively on the inside of every home and
 institutional network in the world. It might be a good idea to have a specific
 function in `iana` that returns true just for those addresses.
 
-##### GoDoc fixes
+#### GoDoc fixes
 There are some small problems with godoc rendering that need fixing.

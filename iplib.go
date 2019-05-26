@@ -30,7 +30,9 @@ limit of a network mask and for v4 it would normally produce a block with no
 usable addresses. To satisfy the RFCs the following changes are made:
 
 - Count() will report 2 addresses instead of 0
+
 - FirstAddress() and NetworkAddress() will be equivalent
+
 - LastAddress() and BroadcastAddress() will be equivalent
 
 */
