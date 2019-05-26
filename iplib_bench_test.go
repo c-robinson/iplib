@@ -25,6 +25,50 @@ func BenchmarkNewNet(b *testing.B) {
 	}
 }
 
+func BenchmarkPreviousIP4(b *testing.B) {
+	var xip = net.IP{10, 255, 255, 255}
+	for i := 0; i < b.N; i++ {
+		xip = PreviousIP(xip)
+	}
+}
+
+func BenchmarkDecrementIP4By(b *testing.B) {
+	var xip = net.IP{10, 255, 255, 255}
+	for i := 0; i < b.N; i++ {
+		xip = DecrementIP4By(xip, 1)
+	}
+}
+
+func BenchmarkDecrementIPBy_v4(b *testing.B) {
+	var xip = net.IP{10, 255, 255, 255}
+	for i := 0; i < b.N; i++ {
+		xip = DecrementIPBy(xip, 1)
+	}
+}
+
+func BenchmarkPreviousIP6(b *testing.B) {
+	var xip = net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 46, 3, 112, 115, 52}
+	for i := 0; i < b.N; i++ {
+		xip = PreviousIP(xip)
+	}
+}
+
+func BenchmarkDecrementIP6By(b *testing.B) {
+	var xip = net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 46, 3, 112, 115, 52}
+	count := big.NewInt(1)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		xip = DecrementIP6By(xip, count)
+	}
+}
+
+func BenchmarkDecrementIPBy_v6(b *testing.B) {
+	var xip = net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 46, 3, 112, 115, 52}
+	for i := 0; i < b.N; i++ {
+		xip = DecrementIPBy(xip, 1)
+	}
+}
+
 func BenchmarkNextIP4(b *testing.B) {
 	var xip = net.IP{10, 0, 0, 0}
 	for i := 0; i < b.N; i++ {
@@ -82,6 +126,38 @@ func BenchmarkNet_Subnet_v6(b *testing.B) {
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		_, _ = n.Subnet(99)
+	}
+}
+
+func BenchmarkNet_PreviousNet_v4(b *testing.B) {
+	_, n, _ := ParseCIDR("192.168.0.0/24")
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		_ = n.PreviousNet(24)
+	}
+}
+
+func BenchmarkNet_PreviousNet_v6(b *testing.B) {
+	_, n, _ := ParseCIDR("2001:db8::/98")
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		_ = n.PreviousNet(24)
+	}
+}
+
+func BenchmarkNet_NextNet_v4(b *testing.B) {
+	_, n, _ := ParseCIDR("192.168.0.0/24")
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		_ = n.NextNet(24)
+	}
+}
+
+func BenchmarkNet_NextNet_v6(b *testing.B) {
+	_, n, _ := ParseCIDR("2001:db8::/98")
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		_ = n.NextNet(24)
 	}
 }
 
