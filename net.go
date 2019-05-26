@@ -159,10 +159,10 @@ func (n Net) Count6() *big.Int {
 // arbitrary constraint on v6 netblocks. If size=0 the entire block is
 // enumerated.
 //
-// NOTE: RFC 3021 defines a use-case for an IPv4 netblock of /31 (which would
-// naturally return no usable addresses). It is the only reason I am aware of
-// to do so. For this reason enumerating a /31 will return a 2 element array
-// containing the network and broadcast addresses.
+// NOTE: RFC3021 (IPv4) and RFC6164 (IPv6) define a use case for netblocks of
+// /31 (for IPv4) and /127 (for IPv6) for use in point-to-point links. For
+// this reason enumerating networks at these lengths will return 2 a 2-element
+// array even though in the v4 case it would naturally return none.
 //
 // For consistency, enumerating an IPv4 /32 will return the IP in a 1 element
 // array.
@@ -312,8 +312,7 @@ func (n Net) PreviousNet(masklen int) Net {
 //
 // Examples:
 // Net{192.168.1.0/24}.Subnet(0)  -> []Net{192.168.1.0/25, 192.168.1.128/25}
-// Net{192.168.1.0/24}.Subnet(26) -> []Net{192.168.1.0/26, 192.168.1.64/26
-//                                         192.168.1.128/26, 192.168.1.192/26}
+// Net{192.168.1.0/24}.Subnet(26) -> []Net{192.168.1.0/26, 192.168.1.64/26, 192.168.1.128/26, 192.168.1.192/26}
 func (n Net) Subnet(masklen int) ([]Net, error) {
 	ones, all := n.Mask.Size()
 	if ones > masklen {

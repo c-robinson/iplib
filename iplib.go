@@ -23,13 +23,15 @@ For functions where it is possible to exceed the address-space the rule is
 that underflows return the version-appropriate all-zeroes address while
 overflows return the all-ones.
 
-A special note about IPv4 blocks with one host bit (/31): the only reason to
-allocate such a subnet is for use as an RFC 3021 point-to-point network and
-IPLib assumes this use-case and acts accordingly:
+A special note about IP blocks with one host bit set (/31, /127): RFC3021 (v4)
+and RFC6164 (v6) describe a case for using these netblocks to number each end
+of a point-to-point link between routers. In v6 this is outside the normal
+limit of a network mask and for v4 it would normally produce a block with no
+usable addresses. To satisfy the RFCs the following changes are made:
 
- - Count() will report 2 addresses instead of 0
- - FirstAddress() and NetworkAddress() will be equivalent
- - LastAddress() and BroadcastAddress() will be equivalent
+- Count() will report 2 addresses instead of 0
+- FirstAddress() and NetworkAddress() will be equivalent
+- LastAddress() and BroadcastAddress() will be equivalent
 
 */
 package iplib
