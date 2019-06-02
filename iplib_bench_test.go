@@ -25,6 +25,22 @@ func BenchmarkNewNet(b *testing.B) {
 	}
 }
 
+func Benchmark_DeltaIP4(b *testing.B) {
+	var xip = net.IP{10, 255, 255, 255}
+	var zip = net.IP{192, 168, 23, 5}
+	for i := 0; i < b.N; i++ {
+		_ = DeltaIP4(xip, zip)
+	}
+}
+
+func Benchmark_DeltaIP6(b *testing.B) {
+	var xip = net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 46, 3, 112, 115, 52}
+	var zip = net.IP{32, 1, 13, 184, 133, 255, 0, 0, 0, 10, 0, 15, 0, 0, 19, 0}
+	for i := 0; i < b.N; i++ {
+		_ = DeltaIP6(xip, zip)
+	}
+}
+
 func BenchmarkPreviousIP4(b *testing.B) {
 	var xip = net.IP{10, 255, 255, 255}
 	for i := 0; i < b.N; i++ {
@@ -110,6 +126,22 @@ func BenchmarkIncrementIPBy_v6(b *testing.B) {
 	var xip = net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 46, 3, 112, 115, 52}
 	for i := 0; i < b.N; i++ {
 		xip = IncrementIPBy(xip, 1)
+	}
+}
+
+func BenchmarkNet_Count4(b *testing.B) {
+	_, n, _ := ParseCIDR("192.168.0.0/24")
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		 _ = n.Count()
+	}
+}
+
+func BenchmarkNet_Count6(b *testing.B) {
+	_, n, _ := ParseCIDR("2001:db8::/98")
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		_ = n.Count()
 	}
 }
 
