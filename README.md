@@ -42,6 +42,12 @@ An enhancement of `net.IPNet` providing features such as:
 - Enumerate all or part of a netblock to `[]net.IP`
 - Allocate subnets and supernets
 
+## Sub-modules
+
+- [iana](https://github.com/c-robinson/iplib/tree/master/iana) - a module for referencing 
+  IP netblocks against the [Internet Assigned Numbers Authority's](https://www.iana.org/)
+  Special IP Address Registry
+
 ## Installing
 
 ```sh
