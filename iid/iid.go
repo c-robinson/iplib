@@ -1,3 +1,16 @@
+/*
+Package iid provides functions for generating and validating IPv6 Interface
+Identifiers (IID's). For the purposes of this module an IID is an IPv6 address
+constructed, somehow, from information which uniquely identifies a given
+interface on a network, and is unique within that network.
+
+As part of validation this package imports the Internet Assigned Numbers
+Authority (IANA) Reserved IPv6 Interface Identifiers as a data structure and
+implements functions to compare the reserved networks against IID's to avoid
+conflicts. The data set for the IANA registry is available from:
+
+- https://www.iana.org/assignments/ipv6-interface-ids/ipv6-interface-ids.xhtml
+*/
 package iid
 
 import (
