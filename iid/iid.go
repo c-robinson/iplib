@@ -19,6 +19,23 @@ import (
 	"github.com/c-robinson/iplib"
 )
 
+// Scope describes the availability of an IPv6 IID
+type Scope int
+
+const (
+	// ScopeNone is an undefined IPv6 IID scope
+	ScopeNone   Scope = iota
+
+	// ScopeInvert will invert the scope of an IID
+	ScopeInvert
+
+	// ScopeGlobal is a global IPv6 IID scope
+	ScopeGlobal
+
+	// ScopeLocal is a local IPv6 IID scope
+	ScopeLocal
+)
+
 // Registry holds the aggregated network list from IANA's "Reserved IPv6
 // Interface Identifiers" as specified in RFC5453. In order to be compliant
 // with RFC 7217's algorithm for "Semantically Opaque Interface Identifiers"

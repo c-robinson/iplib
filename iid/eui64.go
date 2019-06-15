@@ -2,7 +2,7 @@ package iid
 
 import "net"
 
-// SetEUI64Addr takes an IPv6 address, a hardware MAC address and a scope as
+// MakeEUI64Addr takes an IPv6 address, a hardware MAC address and a scope as
 // input and uses them to generate an Interface Identifier suitable for use
 // in link local, global unicast and Stateless Address Autoconfiguration
 // (SLAAC) addresses (but see RFC4941 for problems with this last case).
@@ -11,17 +11,23 @@ import "net"
 // or 64 bits. The hardware address will be appended to the IP address as per
 // RFC4291 section 2.5.1 and be modified as follows:
 //
-// * the 7th bit of the first octet (the 'X' bit in the EUI-64 format) is set
-//   to 1 if the address is globally scoped, or 0 if it is locally scoped
+// * the 7th bit of the first octet (the 'X' bit in the EUI-64 format) may be
+//   modified. If ScopeGlobal is passed, the bit will be set to 1, it will be
+//   set to 0 for ScopeLocal, and ScopeInvert will cause 0 to become 1 or 1 to
+//   become 0. If ScopeNone is passed the bit is left alone. See 'NOTE' below
+//   for the rationale here
 //
-// * if the address is 48 bits, the octets 0xfffe are inserted in the middle
+// * if the address is 48 bits, the octets 0xFFFE are inserted in the middle
 //   of the address to pad it to 64 bits
-func SetEUI64Addr(ip net.IP, hw net.HardwareAddr, global bool) net.IP {
+//
+// NOTE: there is some ambiguity to the RFC here. Most discussions I've seen
+// on the topic say that the 7th bit should _always_ be inverted, but the RFC
+// reads like the IPv6 EUI64 format uses the _inverse signal_ from the IEEE
+// EUI64 format; so where the IEEE uses 0 for global scoping, the IPv6 IID
+// should use 1. This function punts on the question and provides for all
+// interpretations via the Scope parameter
+func MakeEUI64Addr(ip net.IP, hw net.HardwareAddr, scope Scope) net.IP {
 	tag := []byte{0xff, 0xfe}
-	var x uint = 0
-	if global == true {
-		x = 1
-	}
 
 	if len(ip) < 16 {
 		return nil
@@ -38,13 +44,18 @@ func SetEUI64Addr(ip net.IP, hw net.HardwareAddr, global bool) net.IP {
 		hw = append(hw[:3], append(tag, hw[3:]...)...)
 	}
 
-	if global {
-		hw[0] &= 1 << 1
-	} else {
-		hw[0] |= 1 << 1
-	}
+	switch scope {
+	case ScopeGlobal:
+		hw[0] |= 1 << 1  // set 0 or 1 -> 1
 
-	hw[0] ^= 1 << x
+	case ScopeLocal:
+		hw[0] &^= 1 << 1 // set 0 or 1 -> 0
+
+	case ScopeInvert:
+		hw[0] ^= 1 << 1  // set 0 -> 1 or 1 -> 0
+
+	default:
+	}
 
 	copy(eui64[8:], hw)
 
