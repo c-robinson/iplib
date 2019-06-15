@@ -1,6 +1,8 @@
 package iid
 
-import "net"
+import (
+	"net"
+)
 
 // MakeEUI64Addr takes an IPv6 address, a hardware MAC address and a scope as
 // input and uses them to generate an Interface Identifier suitable for use
@@ -44,20 +46,19 @@ func MakeEUI64Addr(ip net.IP, hw net.HardwareAddr, scope Scope) net.IP {
 		hw = append(hw[:3], append(tag, hw[3:]...)...)
 	}
 
+	copy(eui64[8:], hw)
+
 	switch scope {
 	case ScopeGlobal:
-		hw[0] |= 1 << 1  // set 0 or 1 -> 1
+		eui64[8] |= 1 << 1  // set 0 or 1 -> 1
 
 	case ScopeLocal:
-		hw[0] &^= 1 << 1 // set 0 or 1 -> 0
+		eui64[8] &^= 1 << 1 // set 0 or 1 -> 0
 
 	case ScopeInvert:
-		hw[0] ^= 1 << 1  // set 0 -> 1 or 1 -> 0
-
+		eui64[8] ^= 1 << 1  // set 0 -> 1 or 1 -> 0
 	default:
 	}
-
-	copy(eui64[8:], hw)
 
 	return eui64
 }
