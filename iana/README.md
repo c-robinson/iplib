@@ -11,6 +11,18 @@ and exposes it as a data structure. Functions allow a caller to compare the
 registry against `net.IP` and `iplib.Net` objects to see if they contain or
 are contained within an reserved IP address block.
 
+## Installing
+
+```sh
+go get -u github.com/c-robinson/iplib/iana
+```
+
+## Using IANA
+
+Here are examples comparing against both an address and a network. Note that in
+the network case it is entirely possible for a broad-enough network to contain
+multiple reservations. If this is the case all reservations will be returned.
+
 ```go
 package main
 
@@ -21,7 +33,6 @@ import (
 	"github.com/c-robinson/iplib"
 	"github.com/c-robinson/iplib/iana"
 )
-
 
 func main() {
 	ipa := net.ParseIP("144.21.21.21")
