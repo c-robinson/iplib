@@ -16,31 +16,46 @@ package iid
 import (
 	"bytes"
 	"crypto"
+	_ "crypto/sha256"
 	"encoding/binary"
 	"errors"
 	"net"
+
+	"github.com/c-robinson/iplib"
 )
 
-// Scope describes the availability of an IPv6 IID
+// Scope describes the availability of an IPv6 IID and determines how IID-
+// generating functions treat the 7th bit in the 9th octet of the address
+// (the 'X' bit in the EUI-64 format, or the 'u' bit in RFC4291)
+//
+// NOTE: there is some ambiguity to the RFC here. Most discussions I've seen
+// on the topic say that the bit should _always_ be inverted, but the RFC
+// reads like the IPv6 EUI64 format uses the _inverse signal_ from the IEEE
+// EUI64 format; so where the IEEE uses 0 for global scoping, the IPv6 IID
+// should use 1. This module punts on the question and provides for all
+// interpretations via the scope parameter but recommends passing an explicit
+// ScopeGlobal or ScopeLocal
 type Scope int
 
 const (
-	// ScopeNone is an undefined IPv6 IID scope
+	// ScopeNone is an undefined IID scope, the X bit will not be modified
 	ScopeNone   Scope = iota
 
-	// ScopeInvert will invert the scope of an IID
+	// ScopeInvert will cause the X bit to be inverted, setting 0 to 1 and 1
+	// to 0. This behavior is widely interpreted as the correct behavior
 	ScopeInvert
 
-	// ScopeGlobal is a global IPv6 IID scope
+	// ScopeGlobal will cause the X bit to be set to 1, indicating that the
+	// IID should be globally scoped
 	ScopeGlobal
 
-	// ScopeLocal is a local IPv6 IID scope
+	// ScopeLocal will cause the X bit to be set to 0, indicating that the IID
+	// should only be locally scoped
 	ScopeLocal
 )
 
 var (
 	ErrIIDAddressCollision = errors.New("proposed IID collides with IANA reserved IID list")
-	ErrInsufficientHashLength = errors.New("hash function must return a digest of 64bits or more")
 )
 
 // Registry holds the aggregated network list from IANA's "Reserved IPv6
@@ -52,11 +67,11 @@ var Registry []*Reservation
 
 // Reservation describes an entry in the IANA IP Special Registry
 type Reservation struct {
-	// FirstAddr is the first address in the reservation
-	FirstAddr []byte
+	// FirstRes is the first address in the reservation
+	FirstRes []byte
 
-	// LastAddr is the last address  in the reservation
-	LastAddr []byte
+	// LastRes is the last address in the reservation
+	LastRes []byte
 
 	// Title is a name given to the reservation
 	Title string
@@ -68,8 +83,8 @@ type Reservation struct {
 func init() {
 	Registry = []*Reservation{
 		{
-			[]byte{  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
-			[]byte{  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+			[]byte{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+			[]byte{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
 			"Subnet-Router Anycast",
 			"RFC4291",
 		},
@@ -88,7 +103,7 @@ func init() {
 		{
 			[]byte{ 0x02, 0x00, 0x5e, 0xff, 0xfe, 0x00, 0x52, 0x14 },
 			[]byte{ 0x02, 0x00, 0x5e, 0xff, 0xfe, 0xff, 0xff, 0xff },
-			"Reserved IPv6 Interface Identifiers corresponding to the IANA Ethernet Block",
+			"Reserved IPv6 Interface Identifiers corresponding to the IANA Ethernet Block (2)",
 			"RFC4291",
 		},
 		{
@@ -109,18 +124,25 @@ func init() {
 // hw      - 48- or 64-bit net.HardwareAddr, typically of the interface that
 //           this address will be assigned to
 // counter - a monotonically incrementing number read from some non-volatile
-//           local storage. If the function returns ErrIIDAddressCollision
-//           the counter should be incremented and the function called again
+//           local storage. This variable provides the velocity to the entire
+//           algorithm and should be incremented after each use. There is no
+//           guarantee that a generated address wont accidentally fall within
+//           the range of reserved IPv6 IIDs and, should this happen, an
+//           ErrIIDAddressCollision will be returned. This is harmless and if
+//           it happens counter should be incremented and the function called
+//           again
 // netid   - some piece of information identifying the local subnet, such as
 //           an 802.11 SSID. RFC6059 lists other interesting options. This
 //           field may be left blank ([]byte{})
 // secret  - a local, closely held, secret key. This is the sauce that makes
 //           the address opaque
-// htype   - a crypto.Hash function to use when generating the IID. Note that
-//           MD5 is specifically prohibited for being too easily guessable
+// htype   - a crypto.Hash function to use when generating the IID. NOTE that
+//           MD5 is specifically prohibited for being too easily guessable.
+//           NOTE that unless you use sha256 you will need to import the hash
+//           function you intend to use, (e.g. import _ "crypto/sha512")
 // scope   - the scope of the IID
 func GenerateRFC7217Addr(ip net.IP, hw net.HardwareAddr, counter int64, netid, secret []byte, htype crypto.Hash, scope Scope) (net.IP, error) {
-	var bs []byte
+	bs := make([]byte, 8)
 	binary.LittleEndian.PutUint64(bs, uint64(counter))
 
 	bs = append(hw, bs...)
@@ -128,18 +150,17 @@ func GenerateRFC7217Addr(ip net.IP, hw net.HardwareAddr, counter int64, netid, s
 	bs = append(bs, secret...)
 
 	f := htype.New()
-	if f.Size() < 8 {
-		return nil, ErrInsufficientHashLength
-	}
+
 	iid := make([]byte, 16)
 	copy(iid, ip)
 
-	rid := f.Sum(bs)
+	f.Write(bs)
+	rid := f.Sum(nil)
 	rid = setScopeBit(rid, scope)
 
 	copy(iid[8:], rid[0:8])
 
-	if r := GetReservationsForIP(iid); len(r) > 0 {
+	if r := GetReservationsForIP(iid); r != nil {
 		return nil, ErrIIDAddressCollision
 	}
 
@@ -148,17 +169,19 @@ func GenerateRFC7217Addr(ip net.IP, hw net.HardwareAddr, counter int64, netid, s
 
 // GetReservationsForIP returns a list of any IANA reserved networks that
 // the supplied IP is part of
-func GetReservationsForIP(ip net.IP) []*Reservation {
-	reservations := []*Reservation{}
+func GetReservationsForIP(ip net.IP) *Reservation {
+	if iplib.EffectiveVersion(ip) != 6 {
+		return nil
+	}
 	for _, r := range Registry {
-		f := bytes.Compare(r.FirstAddr, ip[8:])
-		l := bytes.Compare(r.LastAddr, ip[8:])
+		f := bytes.Compare(ip[8:], r.FirstRes)
+		l := bytes.Compare(ip[8:], r.LastRes)
 
 		if f >= 0 && l <= 0 {
-			reservations = append(reservations, r)
+			return r
 		}
 	}
-	return reservations
+	return nil
 }
 
 // MakeEUI64Addr takes an IPv6 address, a hardware MAC address and a scope as
@@ -171,25 +194,14 @@ func GetReservationsForIP(ip net.IP) []*Reservation {
 // RFC4291 section 2.5.1 and be modified as follows:
 //
 // * the 7th bit of the first octet (the 'X' bit in the EUI-64 format) may be
-//   modified. If ScopeGlobal is passed, the bit will be set to 1, it will be
-//   set to 0 for ScopeLocal, and ScopeInvert will cause 0 to become 1 or 1 to
-//   become 0. If ScopeNone is passed the bit is left alone. See 'NOTE' below
-//   for the rationale here
+//   modified per the definition for each constant.
 //
 // * if the address is 48 bits, the octets 0xFFFE are inserted in the middle
 //   of the address to pad it to 64 bits
-//
-// NOTE: there is some ambiguity to the RFC here. Most discussions I've seen
-// on the topic say that the 7th bit should _always_ be inverted, but the RFC
-// reads like the IPv6 EUI64 format uses the _inverse signal_ from the IEEE
-// EUI64 format; so where the IEEE uses 0 for global scoping, the IPv6 IID
-// should use 1. This function punts on the question and provides for all
-// interpretations via the Scope parameter but recommends passing an explicit
-// ScopeGlobal or ScopeLocal
 func MakeEUI64Addr(ip net.IP, hw net.HardwareAddr, scope Scope) net.IP {
 	tag := []byte{0xff, 0xfe}
 
-	if len(ip) < 16 {
+	if iplib.EffectiveVersion(ip) != 6 {
 		return nil
 	}
 
@@ -209,12 +221,12 @@ func MakeEUI64Addr(ip net.IP, hw net.HardwareAddr, scope Scope) net.IP {
 }
 
 
-// MakeOpaqueAddr offers one implemention of RFC7217s algorithm for generating
-// a "semantically opaque interface identifier". The caller must supply a
-// counter and secret and MAY supply an additional "netid". Ultimately this
-// function calls GenerateRFC7217Addr() with scope set to "global" and an
-// htype of SHA256, but please see the documentation in that function for an
-// explanation of all the input fields
+// MakeOpaqueAddr offers one implementation of RFC7217's algorithm for
+// generating a "semantically opaque interface identifier". The caller must
+// supply a counter and secret and MAY supply an additional "netid".
+// Ultimately this function calls GenerateRFC7217Addr() with scope set to
+// "global" and an htype of SHA256, but please see the documentation in that
+// function for an explanation of all the input fields
 func MakeOpaqueAddr(ip net.IP, hw net.HardwareAddr, counter int64, netid, secret []byte) (net.IP, error) {
 	return GenerateRFC7217Addr(ip, hw, counter, netid, secret, crypto.SHA256, ScopeGlobal)
 }
