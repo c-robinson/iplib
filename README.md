@@ -47,6 +47,10 @@ An enhancement of `net.IPNet` providing features such as:
 - [iana](https://github.com/c-robinson/iplib/tree/master/iana) - a module for referencing 
   IP netblocks against the [Internet Assigned Numbers Authority's](https://www.iana.org/)
   Special IP Address Registry
+- [iid](https://github.com/c-robinson/iplib/tree/master/iid) - a module for
+  generating and validating IPv6 Interface Identifiers, including [RFC4291](https://tools.ietf.org/html/rfc4291)
+  modified EUI64 and [RFC7217](https://tools.ietf.org/html/rfc7217)
+  Semantically Opaque addresses
 
 ## Installing
 

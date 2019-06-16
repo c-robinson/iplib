@@ -52,15 +52,6 @@ include:
 
 - functions for allocating /64s as if they were IPs as per [RFC7934 section 6](https://tools.ietf.org/html/rfc7934#section-6)
 
-- functions for generating interface identifiers for link-local and global
-  use based on Modified IEEE EUI-64 hardware addresses as described in
-  [RFC 4291](https://tools.ietf.org/html/rfc4291#section-2.5.1)
-
-- The list of RFCs starting with RFC 4941 (and containing at least 7217 
-  and 8064) describe mechanisms for enhancing the privacy of self-generated
-  addresses by pseudo-randomly modifying the last 64 bits of an address.
-  This might make for an interesting sub-module
-
 #### RFC1918
 The most important address-space on the (IPv4) internet is the RFC1918 private
 address block designation that is effectively on the inside of every home and

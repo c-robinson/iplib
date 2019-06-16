@@ -808,9 +808,6 @@ func TestNet_Version(t *testing.T) {
 
 func TestNet_Count(t *testing.T) {
 	for _, tt := range NetworkTests {
-		if tt.version == 6 {
-			continue
-		}
 		_, ipn, _ := ParseCIDR(tt.inaddrStr)
 		count, _ := strconv.Atoi(tt.count)
 		if ipn.Count() != uint32(count) {
