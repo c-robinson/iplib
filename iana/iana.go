@@ -19,9 +19,10 @@ The data-set for the IANA registries is available from:
 package iana
 
 import (
-	"github.com/c-robinson/iplib"
 	"net"
 	"sort"
+
+	"github.com/c-robinson/iplib"
 )
 
 // Registry holds the aggregated network list from IANA's v4 and v6 registries.
@@ -108,10 +109,21 @@ func init() {
 func GetReservationsForNetwork(n iplib.Net) []*Reservation {
 	reservations := []*Reservation{}
 	for _, r := range Registry {
+		if iplib.EffectiveVersion(r.Network.IP()) != iplib.EffectiveVersion(n.IP()) {
+			continue
+		}
 		if r.Network.ContainsNet(n) || n.ContainsNet(r.Network) {
 			reservations = append(reservations, r)
 		}
+		if r.Title == "IPv4-mapped Address" {
+			if n4, ok := n.(iplib.Net4); ok {
+				if n4.Is4in6() {
+					reservations = append(reservations, r)
+				}
+			}
+		}
 	}
+
 	return reservations
 }
 

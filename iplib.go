@@ -3,38 +3,30 @@ Package iplib provides enhanced tools for working with IP networks and
 addresses. These tools are built upon and extend the generic functionality
 found in the Go "net" package.
 
-IPLib comes in two basic parts: a set of utility features for working with
-net.IP (sort, increment, decrement, delta, compare; convert to hex-string or
-integer) and an enhancement of net.IPNet (iplib.Net) that can calculate the
-broadcast, first and last IP addresses in its block, as well as enumerating
-the block into a []net.IP, and incrementing or decrementing within the
-boundaries of the block.
+The main library comes in two parts: a series of utilities for working with
+net.IP (sort, increment, decrement, delta, compare, convert to binary or hex-
+string, convert between net.IP and integer) and an enhancement of net.IPNet
+called iplib.Net that can calculate the first and last IPs of a block as well
+as enumerating the block into []net.IP, incrementing and decrementing within
+the boundaries of the block and creating sub- or super-nets of it.
 
-For the most part IPLib tries to ensure that v4 and v6 addresses are treated
-equally and managed transparently. The one exception is those functions which
-return or require a total as an integer: for these a version-independent
-function is provided and limited to uint32, but there are also v4 and
-v6 variants, the v6 function will always take *big.Int and be able to access
-the entire v6 address space. In all cases the version-independent function is
-simply a router between the v4 and v6 functions that internally converts
-uint32 to big.Int when necessary.
+For most features iplib exposes a v4 and a v6 variant to handle each network
+properly, but in all cases there is a generic function that handles any IP and
+routes between them. One caveat to this is those functions that require or
+return an integer value representing the address, in these cases the IPv4
+variants take an int32 as input while the IPv6 functions require a *big.Int
+in order to work with the 128bits of address.
 
 For functions where it is possible to exceed the address-space the rule is
 that underflows return the version-appropriate all-zeroes address while
 overflows return the all-ones.
 
-A special note about IP blocks with one host bit set (/31, /127): RFC3021 (v4)
-and RFC6164 (v6) describe a case for using these netblocks to number each end
-of a point-to-point link between routers. In v6 this is outside the normal
-limit of a network mask and for v4 it would normally produce a block with no
-usable addresses. To satisfy the RFCs the following changes are made:
-
-- Count() will report 2 addresses instead of 0
-
-- FirstAddress() and NetworkAddress() will be equivalent
-
-- LastAddress() and BroadcastAddress() will be equivalent
-
+There are also two submodules under iplib: the iplib/iid module contains
+functions for generating RFC 7217-compliant IPv6 Interface ID addresses, and
+iplib/iana imports the IANA IP Special Registries and exposes functions for
+comparing IP addresses against those registries to determine if the IP is part
+of a special reservation (for example RFC 1918 private networks or the RFC
+3849 documentation network).
 */
 package iplib
 
@@ -52,15 +44,21 @@ import (
 const (
 	// MaxIPv4 is the max size of a uint32, also the IPv4 address space
 	MaxIPv4 = 1<<32 - 1
+
+	// IP4Version is the label returned by IPv4 addresses
+	IP4Version = 4
+
+	// IP6Version is the label returned by IPv6 addresses
+	IP6Version = 6
 )
 
+// Errors that may be returned by functions in this package
 var (
-	ErrAddressAtEndOfRange = errors.New("proposed operation would cause address to exit block")
-	ErrAddressOutOfRange   = errors.New("the given IP address is not a part of this netblock")
-	ErrBadMaskLength       = errors.New("illegal mask length provided")
-	ErrBroadcastAddress    = errors.New("address is the broadcast address of this netblock (and not considered usable)")
-	ErrNetworkAddress      = errors.New("address is the network address of this netblock (and not considered usable)")
-	ErrNoValidRange        = errors.New("no netblock can be found between the supplied values")
+	ErrAddressOutOfRange = errors.New("address is not a part of this netblock")
+	ErrBadMaskLength     = errors.New("illegal mask length provided")
+	ErrBroadcastAddress  = errors.New("address is the broadcast address of this netblock (and not considered usable)")
+	ErrNetworkAddress    = errors.New("address is the network address of this netblock (and not considered usable)")
+	ErrNoValidRange      = errors.New("no netblock can be found between the supplied values")
 )
 
 // ByIP implements sort.Interface for net.IP addresses
@@ -88,34 +86,6 @@ func (bi ByIP) Less(a, b int) bool {
 	return false
 }
 
-// ByNet implements sort.Interface for iplib.Net based on the
-// starting address of the netblock, with the netmask as a tie breaker. So if
-// two Networks are submitted and one is a subset of the other, the enclosing
-// network will be returned first.
-type ByNet []Net
-
-// Len implements sort.interface Len(), returning the length of the
-// ByNetwork array
-func (bn ByNet) Len() int {
-	return len(bn)
-}
-
-// Swap implements sort.interface Swap(), swapping two elements in our array
-func (bn ByNet) Swap(a, b int) {
-	bn[a], bn[b] = bn[b], bn[a]
-}
-
-// Less implements sort.interface Less(), given two elements in the array it
-// returns true if the LHS should sort before the RHS. For details on the
-// implementation, see CompareNets()
-func (bn ByNet) Less(a, b int) bool {
-	val := CompareNets(bn[a], bn[b])
-	if val == -1 {
-		return true
-	}
-	return false
-}
-
 // BigintToIP6 converts a big.Int to an ip6 address and returns it as a net.IP
 func BigintToIP6(z *big.Int) net.IP {
 	b := z.Bytes()
@@ -132,7 +102,7 @@ func BigintToIP6(z *big.Int) net.IP {
 			b = append([]byte{0}, b...)
 		}
 	}
-	return net.IP(b)
+	return b
 }
 
 // CompareIPs is just a thin wrapper around bytes.Compare, but is here for
@@ -147,13 +117,13 @@ func CompareIPs(a, b net.IP) int {
 // comparing their netmasks (smallest wins). This means that if a network is
 // compared to one of its subnets, the enclosing network sorts first.
 func CompareNets(a, b Net) int {
-	val := bytes.Compare(a.NetworkAddress(), b.NetworkAddress())
+	val := bytes.Compare(a.IP(), b.IP())
 	if val != 0 {
 		return val
 	}
 
-	am, _ := a.Mask.Size()
-	bm, _ := b.Mask.Size()
+	am, _ := a.Mask().Size()
+	bm, _ := b.Mask().Size()
 
 	if am == bm {
 		return 0
@@ -168,7 +138,7 @@ func CompareNets(a, b Net) int {
 // the supplied integer value. If you underflow the IP space it will return
 // the zero address.
 func DecrementIPBy(ip net.IP, count uint32) net.IP {
-	if EffectiveVersion(ip) == 4 {
+	if EffectiveVersion(ip) == IP4Version {
 		return DecrementIP4By(ip, count)
 	}
 	z := big.NewInt(int64(count))
@@ -201,7 +171,7 @@ func DecrementIP6By(ip net.IP, count *big.Int) net.IP {
 // DeltaIP takes two net.IP's as input and returns the difference between them
 // up to the limit of uint32.
 func DeltaIP(a, b net.IP) uint32 {
-	if EffectiveVersion(a) == 4 && EffectiveVersion(b) == 4 {
+	if EffectiveVersion(a) == IP4Version && EffectiveVersion(b) == IP4Version {
 		return DeltaIP4(a, b)
 	}
 	m := big.NewInt(int64(MaxIPv4))
@@ -232,29 +202,36 @@ func DeltaIP6(a, b net.IP) *big.Int {
 	bi := IPToBigint(b)
 	i := big.NewInt(0)
 
-	if v := ai.Cmp(bi); v >= 0 {
-		return i.Sub(ai, bi)
-	}
-	return i.Sub(bi, ai)
+	return i.Sub(ai, bi).Abs(i)
 }
 
 // EffectiveVersion returns 4 if the net.IP either contains a v4 address or if
-// it contains the v4-encapsulating v6 address range ::ffff
+// it contains the v4-encapsulating v6 address range ::ffff. Note that the
+// second example below is a v6 address but reports as v4 because it is in the
+// 4in6 block. This mirrors how Go's `net` package would treat the address
 func EffectiveVersion(ip net.IP) int {
-	a := ip.To4()
-	if a == nil {
-		return 6
+	if ip == nil {
+		return 0
 	}
-	return 4
+
+	if len(ip) == 4 {
+		return IP4Version
+	}
+
+	if Is4in6(ip) {
+		return IP4Version
+	}
+
+	return IP6Version
 }
 
 // ExpandIP6 takes a net.IP containing an IPv6 address and returns a string of
-// the address fully expanded (:: -> 0000:0000:0000:0000:0000:0000:0000:0000)
+// the address fully expanded
 func ExpandIP6(ip net.IP) string {
 	var h []byte
 	var s string
 	h = make([]byte, hex.EncodedLen(len(ip.To16())))
-	hex.Encode(h, []byte(ip))
+	hex.Encode(h, ip)
 	for i, c := range h {
 		if i%4 == 0 {
 			s = s + ":"
@@ -294,11 +271,94 @@ func HexStringToIP(s string) net.IP {
 	return h
 }
 
+// IPToARPA takes a net.IP as input and returns a string of the version-
+// appropriate ARPA DNS name
+func IPToARPA(ip net.IP) string {
+	if EffectiveVersion(ip) == IP4Version {
+		return IP4ToARPA(ip)
+	}
+	return IP6ToARPA(ip)
+}
+
+// IP4ToARPA takes a net.IP containing an IPv4 address and returns a string of
+// the address represented as dotted-decimals in reverse-order and followed by
+// the IPv4 ARPA domain "in-addr.arpa"
+func IP4ToARPA(ip net.IP) string {
+	ip = ForceIP4(ip)
+	return fmt.Sprintf("%d.%d.%d.%d.in-addr.arpa", ip[3], ip[2], ip[1], ip[0])
+}
+
+// IP6ToARPA takes a net.IP containing an IPv6 address and returns a string of
+// the address represented as a sequence of 4-bit nibbles in reverse order and
+// followed by the IPv6 ARPA domain "ip6.arpa"
+func IP6ToARPA(ip net.IP) string {
+	var domain = "ip6.arpa"
+	var h []byte
+	var s string
+	h = make([]byte, hex.EncodedLen(len(ip)))
+	hex.Encode(h, ip)
+
+	for i := len(h) - 1; i >= 0; i-- {
+		s = s + string(h[i]) + "."
+	}
+	return s + domain
+}
+
+// IPToBigint converts a net.IP to big.Int.
+func IPToBigint(ip net.IP) *big.Int {
+	z := new(big.Int)
+	z.SetBytes(ip)
+	return z
+}
+
+// IPToBinaryString returns the given net.IP as a binary string
+func IPToBinaryString(ip net.IP) string {
+	var sa []string
+	if len(ip) > 4 && EffectiveVersion(ip) == 4 {
+		ip = ForceIP4(ip)
+	}
+	for _, b := range ip {
+		sa = append(sa, fmt.Sprintf("%08b", b))
+	}
+	return strings.Join(sa, ".")
+}
+
+// IPToHexString returns the given net.IP as a hexadecimal string. This is the
+// default stringer format for v6 net.IP
+func IPToHexString(ip net.IP) string {
+	if EffectiveVersion(ip) == IP4Version {
+		return hex.EncodeToString(ForceIP4(ip))
+	}
+	return ip.String()
+}
+
+// IP4ToUint32 converts a net.IPv4 to a uint32.
+func IP4ToUint32(ip net.IP) uint32 {
+	if EffectiveVersion(ip) != IP4Version {
+		return 0
+	}
+
+	return binary.BigEndian.Uint32(ForceIP4(ip))
+}
+
+// IP6ToUint64 converts a net.IPv6 to a uint64, but only the first 64bits of
+// address are considered meaningful (any information in the last 64bits will
+// be lost). To work with entire IPv6 addresses use IPToBigint()
+func IP6ToUint64(ip net.IP) uint64 {
+	if EffectiveVersion(ip) != IP6Version {
+		return 0
+	}
+	ipn := make([]byte, 8)
+	copy(ipn, ip[:8])
+
+	return binary.BigEndian.Uint64(ipn)
+}
+
 // IncrementIPBy returns a net.IP that is greater than the supplied net.IP by
 // the supplied integer value. If you overflow the IP space it will return
 // the all-ones address
 func IncrementIPBy(ip net.IP, count uint32) net.IP {
-	if Version(ip) == 4 {
+	if EffectiveVersion(ip) == IP4Version {
 		return IncrementIP4By(ip, count)
 	}
 	z := big.NewInt(int64(count))
@@ -328,76 +388,50 @@ func IncrementIP6By(ip net.IP, count *big.Int) net.IP {
 	return BigintToIP6(z)
 }
 
-// IPToBinaryString returns the given net.IP as a binary string
-func IPToBinaryString(ip net.IP) string {
-	var sa []string
-	if len(ip) > 4 && EffectiveVersion(ip) == 4 {
+// Is4in6 returns true if the supplied net.IP is an IPv4 address encapsulated
+// in an IPv6 address. It is very common for the net library to re-write v4
+// addresses into v6 addresses prefixed 0000:0000:0000:0000:ffff. When this
+// happens net.IP will have a 16-byte array but always return a v4 address (in
+// fact there is no way to force it to behave as a v6 address), which has lead
+// to many confused message board comments
+func Is4in6(ip net.IP) bool {
+	if len(ip) < 16 {
+		return false
+	}
+	if ip[0] == 0x00 && ip[1] == 0x00 && ip[2] == 0x00 && ip[3] == 0x00 &&
+		ip[4] == 0x00 && ip[5] == 0x00 && ip[6] == 0x00 && ip[7] == 0x00 &&
+		ip[8] == 0x00 && ip[9] == 0x00 && ip[10] == 0xff && ip[11] == 0xff {
+		return true
+	}
+	return false
+}
+
+// IsAllOnes returns true if the supplied net.IP is the all-ones address,
+// if given a 4-in-6 address this function will treat it as IPv4
+func IsAllOnes(ip net.IP) bool {
+	if EffectiveVersion(ip) == 4 {
 		ip = ForceIP4(ip)
 	}
 	for _, b := range ip {
-		sa = append(sa, fmt.Sprintf("%08b", b))
+		if b != 255 {
+			return false
+		}
 	}
-	return strings.Join(sa, ".")
+	return true
 }
 
-// IPToHexString returns the given net.IP as a hexadecimal string. This is the
-// default stringer format for v6 net.IP
-func IPToHexString(ip net.IP) string {
+// IsAllZeroes returns true if the supplied net.IP is the all-zero address, if
+// given a 4-in-6 address this function will treat it as IPv4
+func IsAllZeroes(ip net.IP) bool {
 	if EffectiveVersion(ip) == 4 {
-		return hex.EncodeToString(ForceIP4(ip))
+		ip = ForceIP4(ip)
 	}
-	return ip.String()
-}
-
-// IP4ToUint32 converts a net.IPv4 to a uint32.
-func IP4ToUint32(ip net.IP) uint32 {
-	if EffectiveVersion(ip) != 4 {
-		return 0
+	for _, b := range ip {
+		if b != 0 {
+			return false
+		}
 	}
-
-	i := binary.BigEndian.Uint32(ForceIP4(ip))
-	return i
-}
-
-// IPToARPA takes a net.IP as input and returns a string of the version-
-// appropriate ARPA DNS name
-func IPToARPA(ip net.IP) string {
-	if EffectiveVersion(ip) == 4 {
-		return IP4ToARPA(ip)
-	}
-	return IP6ToARPA(ip)
-}
-
-// IP4ToARPA takes a net.IP containing an IPv4 address and returns a string of
-// the address represented as dotted-decimals in reverse-order and followed by
-// the IPv4 ARPA domain "in-addr.arpa"
-func IP4ToARPA(ip net.IP) string {
-	ip = ForceIP4(ip)
-	return fmt.Sprintf("%d.%d.%d.%d.in-addr.arpa", ip[3], ip[2], ip[1], ip[0])
-}
-
-// IP6ToARPA takes a net.IP containing an IPv6 address and returns a string of
-// the address represented as a sequence of 4-bit nibbles in reverse order and
-// followed by the IPv6 ARPA domain "ip6.arpa". '2001:db8::1' is rendered as:
-// "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa"
-func IP6ToARPA(ip net.IP) string {
-	var domain = "ip6.arpa"
-	var h []byte
-	var s string
-	h = make([]byte, hex.EncodedLen(len(ip)))
-	hex.Encode(h, []byte(ip))
-
-	for i := len(h) - 1; i >= 0; i-- {
-		s = s + string(h[i]) + "."
-	}
-	return s + domain
-}
-
-// IPToBigint converts a net.IP to big.Int.
-func IPToBigint(ip net.IP) *big.Int {
-	z := new(big.Int)
-	z.SetBytes(ip)
-	return z
+	return true
 }
 
 // NextIP returns a net.IP incremented by one from the input address. This
@@ -405,19 +439,17 @@ func IPToBigint(ip net.IP) *big.Int {
 // 4x faster on v6 than IncrementIP6By(1). The bundled tests provide
 // benchmarks doing so, as well as iterating over the entire v4 address space.
 func NextIP(ip net.IP) net.IP {
-	var ipn []byte
-	if EffectiveVersion(ip) == 4 {
-		ipn = make([]byte, 4)
-		copy(ipn, ip)
+	var xip []byte
+	if EffectiveVersion(ip) == IP4Version {
+		xip = getCloneIP(ForceIP4(ip))
 	} else {
-		ipn = make([]byte, 16)
-		copy(ipn, ip)
+		xip = getCloneIP(ip)
 	}
 
-	for i := len(ipn) - 1; i >= 0; i-- {
-		ipn[i]++
-		if ipn[i] > 0 {
-			return ipn
+	for i := len(xip) - 1; i >= 0; i-- {
+		xip[i]++
+		if xip[i] > 0 {
+			return xip
 		}
 	}
 	return ip // if we're already at the end of range, don't wrap
@@ -428,19 +460,17 @@ func NextIP(ip net.IP) net.IP {
 // 4x faster on v6 than DecrementIP6By(1). The bundled tests provide
 // benchmarks doing so, as well as iterating over the entire v4 address space.
 func PreviousIP(ip net.IP) net.IP {
-	var ipn []byte
-	if EffectiveVersion(ip) == 4 {
-		ipn = make([]byte, 4)
-		copy(ipn, ip.To4())
+	var xip []byte
+	if EffectiveVersion(ip) == IP4Version {
+		xip = getCloneIP(ForceIP4(ip))
 	} else {
-		ipn = make([]byte, 16)
-		copy(ipn, ip)
+		xip = getCloneIP(ip)
 	}
 
-	for i := len(ipn) - 1; i >= 0; i-- {
-		ipn[i]--
-		if ipn[i] != 255 {
-			return ipn
+	for i := len(xip) - 1; i >= 0; i-- {
+		xip[i]--
+		if xip[i] != 255 {
+			return xip
 		}
 	}
 	return ip // if we're already at beginning of range, don't wrap
@@ -453,19 +483,36 @@ func Uint32ToIP4(i uint32) net.IP {
 	return ip
 }
 
+// Uint64ToIP6 converts a uint64 to an IPv6 address, but only the left-most
+// half of a (128bit) IPv6 address can be accessed in this way, the back half
+// of the address is lost. To manipulate the entire address, see BigintToIP6()
+func Uint64ToIP6(i uint64) net.IP {
+	ip := make([]byte, 16)
+	binary.BigEndian.PutUint64(ip, i)
+	return ip
+}
+
 // Version returns 4 if the net.IP contains a v4 address. It will return 6 for
-// any v6 address, including the v4-encapsulating v6 address range ::ffff
+// any v6 address, including the v4-encapsulating v6 address range ::ffff.
+// Contrast with EffectiveVersion above and note that in the provided example
+// ForceIP4() is used because, by default, net.ParseIP() stores IPv4 addresses
+// as 4in6 encapsulating v6 addresses. One consequence of which is that
+// it is impossible to use a 4in6 address as a v6 address
 func Version(ip net.IP) int {
-	a := ip.To4()
-	if a == nil || len(ip) == 16 {
-		return 6
+	if ip == nil {
+		return 0
 	}
-	return 4
+
+	if len(ip) == 4 {
+		return IP4Version
+	}
+
+	return IP6Version
 }
 
 func generateNetLimits(version int, filler byte) net.IP {
 	var b []byte
-	if version == 6 {
+	if version == IP6Version {
 		version = 16
 	}
 	b = make([]byte, version)
@@ -473,4 +520,16 @@ func generateNetLimits(version int, filler byte) net.IP {
 		b[i] = filler
 	}
 	return b
+}
+
+func getCloneBigInt(z *big.Int) *big.Int {
+	nz := new(big.Int)
+	return nz.Set(z)
+}
+
+func getCloneIP(ip net.IP) net.IP {
+	var xip []byte
+	xip = make([]byte, len(ip))
+	copy(xip, ip)
+	return xip
 }

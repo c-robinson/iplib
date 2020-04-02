@@ -75,7 +75,7 @@ var RFC7217AddrTests = []struct {
 }
 
 func TestGenerateRFC7217Addr(t *testing.T) {
-	ip    := net.ParseIP("2001:db8::")
+	ip := net.ParseIP("2001:db8::")
 	hw, _ := net.ParseMAC("77:88:99:aa:bb:cc")
 	for i, tt := range RFC7217AddrTests {
 		out, err := GenerateRFC7217Addr(ip, hw, tt.counter, []byte(tt.netid), []byte(tt.secret), tt.htype, tt.scope)
@@ -94,10 +94,10 @@ func TestGenerateRFC7217Addr(t *testing.T) {
 }
 
 var IPTests = []struct {
-	name     string
-	address  string
-	res      bool
-	rfc      string
+	name    string
+	address string
+	res     bool
+	rfc     string
 }{
 	{
 		"Broken",
@@ -282,7 +282,7 @@ var OpaqueAddrTests = []struct {
 }
 
 func TestMakeOpaqueAddr(t *testing.T) {
-	ip    := net.ParseIP("2001:db8::")
+	ip := net.ParseIP("2001:db8::")
 	hw, _ := net.ParseMAC("77:88:99:aa:bb:cc")
 	for i, tt := range OpaqueAddrTests {
 		out, err := MakeOpaqueAddr(ip, hw, tt.counter, []byte(tt.netid), []byte(tt.secret))
