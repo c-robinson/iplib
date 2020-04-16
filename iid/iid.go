@@ -158,20 +158,20 @@ func GenerateRFC7217Addr(ip net.IP, hw net.HardwareAddr, counter int64, netid, s
 
 	f := htype.New()
 
-	iid := make([]byte, 16)
-	copy(iid, ip)
+	ipiid := make([]byte, 16)
+	copy(ipiid, ip)
 
 	f.Write(bs)
 	rid := f.Sum(nil)
 	rid = setScopeBit(rid, scope)
 
-	copy(iid[8:], rid[0:8])
+	copy(ipiid[8:], rid[0:8])
 
-	if r := GetReservationsForIP(iid); r != nil {
+	if r := GetReservationsForIP(ipiid); r != nil {
 		return nil, ErrIIDAddressCollision
 	}
 
-	return iid, nil
+	return ipiid, nil
 }
 
 // GetReservationsForIP returns a list of any IANA reserved networks that
@@ -219,11 +219,14 @@ func MakeEUI64Addr(ip net.IP, hw net.HardwareAddr, scope Scope) net.IP {
 	eui64 := make([]byte, 16)
 	copy(eui64, ip)
 
-	if len(hw) == 6 {
-		hw = append(hw[:3], append(tag, hw[3:]...)...)
+	hwi := make([]byte, len(hw))
+	copy(hwi, hw)
+
+	if len(hwi) == 6 {
+		hwi = append(hwi[:3], append(tag, hwi[3:]...)...)
 	}
 
-	copy(eui64[8:], hw)
+	copy(eui64[8:], hwi)
 	return setScopeBit(eui64, scope)
 }
 
