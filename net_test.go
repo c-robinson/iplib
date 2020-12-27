@@ -39,7 +39,7 @@ var NewNetTests = []struct {
 
 func TestNewNet(t *testing.T) {
 	for _, tt := range NewNetTests {
-		xnet, _ := NewNet(tt.ip, tt.masklen)
+		xnet := NewNet(tt.ip, tt.masklen)
 		_, pnet, _ := net.ParseCIDR(tt.out)
 		if xnet.String() != pnet.String() {
 			t.Errorf("On NewNet(%s, %d) expected %s got %s", tt.ip.String(), tt.masklen, pnet.String(), xnet.String())
@@ -168,20 +168,6 @@ func TestNewNetBetween(t *testing.T) {
 			if exact != tt.exact {
 				t.Errorf("On NewNetBetween(%s, %s) expected '%t', got '%t'", tt.start, tt.end, tt.exact, exact)
 			}
-		}
-	}
-}
-
-// ParseCIDR wraps net.ParseCIDR so it's redundant to test it except to make sure the wildcard is correct
-func TestParseCIDR(t *testing.T) {
-	for _, tt := range Network4Tests {
-		if tt.version == 6 {
-			continue
-		}
-		_, ipn, _ := ParseCIDR(tt.inaddrStr)
-
-		if ipn.LastAddress().String() != tt.wildcard.String() {
-			t.Errorf("On %s got Network.Wildcard == %v, want %v", tt.inaddrStr, ipn.LastAddress(), tt.wildcard)
 		}
 	}
 }
