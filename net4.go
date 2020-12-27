@@ -10,8 +10,6 @@ import (
 // the IPv6 implementation
 type Net4 struct {
 	net.IPNet
-	version int
-	length  int
 }
 
 // NewNet4 returns an initialized Net4 object at the specified masklen. If
@@ -20,19 +18,19 @@ type Net4 struct {
 func NewNet4(ip net.IP, masklen int) Net4 {
 	var maskMax = 32
 	if masklen > maskMax {
-		return Net4{IPNet: nil, version: 4, length: net.IPv4len}
+		return Net4{IPNet: net.IPNet{}}
 	}
 	mask := net.CIDRMask(masklen, maskMax)
 	n := net.IPNet{IP: ip.Mask(mask), Mask: mask}
-	return Net4{IPNet: n, version: 4, length: net.IPv4len}
+	return Net4{IPNet: n}
 }
 
 // BroadcastAddress returns the broadcast address for the represented network.
 // In the context of IPv6 broadcast is meaningless and the value will be
 // equivalent to LastAddress().
 func (n Net4) BroadcastAddress() net.IP {
-	a, _ := n.finalAddress()
-	return a
+	xip, _ := n.finalAddress()
+	return xip
 }
 
 // Contains returns true if ip is contained in the represented netblock
@@ -54,7 +52,7 @@ func (n Net4) Count() uint32 {
 	ones, all := n.Mask().Size()
 	exp := all - ones
 	if exp == 1 {
-		return uint32(0) // special handling for /31
+		return uint32(2) // special handling for RFC3021 /31
 	}
 	if exp == 0 {
 		return uint32(1) // special handling for /32
@@ -87,16 +85,11 @@ func (n Net4) Enumerate(size, offset int) []net.IP {
 
 	// Handle edge-case mask sizes
 	if count == 1 { // Count() returns 1 if host-bits == 0
-		return []net.IP{n.IPNet.IP}
+		return []net.IP{getCloneIP(n.IPNet.IP)}
 
 	}
 	if count == 0 { // Count() returns 0 if host-bits == 1
-		addrList := []net.IP{
-			n.IP(),
-			n.BroadcastAddress(),
-		}
-
-		return addrList[offset:]
+		return []net.IP{getCloneIP(n.IP()), n.BroadcastAddress()}
 	}
 
 	netu := IP4ToUint32(n.FirstAddress())
@@ -113,8 +106,10 @@ func (n Net4) Enumerate(size, offset int) []net.IP {
 
 // FirstAddress returns the first usable address for the represented network
 func (n Net4) FirstAddress() net.IP {
-	i, j := n.Mask().Size()
-	if i+2 > j {
+	ones, _ := n.Mask().Size()
+
+	// if it's either a single IP or RFC 3021, return the network address
+	if ones >= 31 {
 		return n.IPNet.IP
 	}
 	return NextIP(n.IP())
@@ -122,14 +117,14 @@ func (n Net4) FirstAddress() net.IP {
 
 // LastAddress returns the last usable address for the represented network
 func (n Net4) LastAddress() net.IP {
-	a, ones := n.finalAddress()
+	xip, ones := n.finalAddress()
 
 	// if it's either a single IP or RFC 3021, return the last address
 	if ones >= 31 {
-		return a
+		return xip
 	}
 
-	return PreviousIP(a)
+	return PreviousIP(xip)
 }
 
 // Mask returns the netmask of the netblock
@@ -165,7 +160,7 @@ func (n Net4) NextIP(ip net.IP) (net.IP, error) {
 		return net.IP{}, ErrAddressAtEndOfRange
 	}
 	// if this is the broadcast address, return it but warn the caller via error
-	if n.BroadcastAddress().Equal(xip) && n.version == 4 {
+	if n.BroadcastAddress().Equal(xip) {
 		return xip, ErrBroadcastAddress
 	}
 	return xip, nil
@@ -193,7 +188,7 @@ func (n Net4) PreviousIP(ip net.IP) (net.IP, error) {
 		return net.IP{}, ErrAddressAtEndOfRange
 	}
 	// if this is the network address, return it but warn the caller via error
-	if n.IP().Equal(xip) && n.version == 4 {
+	if n.IP().Equal(xip) {
 		return xip, ErrNetworkAddress
 	}
 	return xip, nil
@@ -235,11 +230,11 @@ func (n Net4) Subnet(masklen int) ([]Net4, error) {
 	}
 
 	mask := net.CIDRMask(masklen, all)
-	netlist := []Net4{{net.IPNet{n.IP(), mask}, n.version, n.length}}
+	netlist := []Net4{{net.IPNet{n.IP(), mask}}}
 
 	for CompareIPs(netlist[len(netlist)-1].BroadcastAddress(), n.BroadcastAddress()) == -1 {
 		ng := net.IPNet{IP: NextIP(netlist[len(netlist)-1].BroadcastAddress()), Mask: mask}
-		netlist = append(netlist, Net4{ng, n.version, n.length})
+		netlist = append(netlist, Net4{ng})
 	}
 	return netlist, nil
 }
@@ -264,16 +259,16 @@ func (n Net4) Supernet(masklen int) (Net4, error) {
 
 	mask := net.CIDRMask(masklen, all)
 	ng := net.IPNet{IP: n.IP().Mask(mask), Mask: mask}
-	return Net4{ng, n.version, n.length}, nil
+	return Net4{ng}, nil
 }
 
-// Version returns the version of IP for the enclosed netblock, Either 4 or 6.
+// Version returns the version of IP for the enclosed netblock, 4 in this case
 func (n Net4) Version() int {
-	return n.version
+	return IP4Version
 }
 
-// Wildcard will return the wildcard mask for a given netmask
-func (n Net4) Wildcard() net.IPMask {
+// wildcard will return the wildcard mask for a given netmask
+func (n Net4) Wildcard() HostMask {
 	wc := make([]byte, len(n.Mask()))
 	for pos, b := range n.Mask() {
 		wc[pos] = 0xff - b
@@ -286,13 +281,13 @@ func (n Net4) Wildcard() net.IPMask {
 // it differently. It returns the last address in the block as well as the
 // number of masked bits as an int.
 func (n Net4) finalAddress() (net.IP, int) {
-	a := make([]byte, len(n.IP()))
+	xip := make([]byte, len(n.IP()))
 	ones, _ := n.Mask().Size()
 
 	// apply wildcard to network, byte by byte
 	wc := n.Wildcard()
 	for pos, b := range []byte(n.IP()) {
-		a[pos] = b + wc[pos]
+		xip[pos] = b + wc[pos]
 	}
-	return a, ones
+	return xip, ones
 }

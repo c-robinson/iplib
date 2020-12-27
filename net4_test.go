@@ -7,9 +7,8 @@ import (
 )
 
 var Network4Tests = []struct {
-	inaddrStr  string
-	ipaddr     net.IP
-	inaddrMask int
+	ip         net.IP
+	masklen    int
 	network    net.IP
 	netmask    net.IPMask
 	wildcard   net.IPMask
@@ -19,19 +18,17 @@ var Network4Tests = []struct {
 	count      uint32
 }{
 	{
-		"10.1.2.3/8",
-		net.IP{10, 1, 2, 3},
+		net.ParseIP("10.1.2.3"),
 		8,
-		net.IP{10, 0, 0, 0},
+		net.ParseIP("10.0.0.0"),
 		net.IPMask{255, 0, 0, 0},
 		net.IPMask{0, 255, 255, 255},
-		net.IP{10, 255, 255, 255},
-		net.IP{10, 0, 0, 1},
-		net.IP{10, 255, 255, 254},
+		net.ParseIP("10.255.255.255"),
+		net.ParseIP("10.0.0.1"),
+		net.ParseIP("10.255.255.254"),
 		16777214,
 	},
 	{
-		"192.168.1.1/23",
 		net.IP{192, 168, 1, 1},
 		23,
 		net.IP{192, 168, 0, 0},
@@ -43,7 +40,6 @@ var Network4Tests = []struct {
 		510,
 	},
 	{
-		"192.168.1.61/26",
 		net.IP{192, 168, 1, 61},
 		26,
 		net.IP{192, 168, 1, 0},
@@ -55,7 +51,6 @@ var Network4Tests = []struct {
 		62,
 	},
 	{
-		"192.168.1.66/26",
 		net.IP{192, 168, 1, 66},
 		26,
 		net.IP{192, 168, 1, 64},
@@ -67,7 +62,6 @@ var Network4Tests = []struct {
 		62,
 	},
 	{
-		"192.168.1.1/30",
 		net.IP{192, 168, 1, 1},
 		30,
 		net.IP{192, 168, 1, 0},
@@ -79,7 +73,6 @@ var Network4Tests = []struct {
 		2,
 	},
 	{
-		"192.168.1.1/31",
 		net.IP{192, 168, 1, 1},
 		31,
 		net.IP{192, 168, 1, 0},
@@ -88,10 +81,9 @@ var Network4Tests = []struct {
 		net.IP{192, 168, 1, 1},
 		net.IP{192, 168, 1, 0},
 		net.IP{192, 168, 1, 1},
-		0,
+		2,
 	},
 	{
-		"192.168.1.15/32",
 		net.IP{192, 168, 1, 15},
 		32,
 		net.IP{192, 168, 1, 15},
@@ -106,70 +98,73 @@ var Network4Tests = []struct {
 
 func TestNet4_BroadcastAddress(t *testing.T) {
 	for _, tt := range Network4Tests {
-		_, ipn, _ := ParseCIDR(tt.inaddrStr)
-		ipn4 := ipn.(Net4)
-		if addr := ipn4.BroadcastAddress(); !tt.broadcast.Equal(addr) {
-			t.Errorf("On %s got Network.Broadcast == %v, want %v", tt.inaddrStr, addr, tt.broadcast)
+		ipn := NewNet4(tt.ip, tt.masklen)
+		if addr := ipn.BroadcastAddress(); !tt.broadcast.Equal(addr) {
+			t.Errorf("On %s got Network.Broadcast == %v, want %v", ipn, addr, tt.broadcast)
 		}
 	}
 }
 
 func TestNet4_Version(t *testing.T) {
 	for _, tt := range Network4Tests {
-		_, ipnp, _ := ParseCIDR(tt.inaddrStr)
-		ipnn := NewNet(tt.ipaddr, tt.inaddrMask)
-		if ipnp.Version() != 4 {
-			t.Errorf("From ParseCIDR %s got Network.Version == %d, expect 4", tt.inaddrStr, ipnp.Version())
-		}
-		if ipnn.Version() != 4 {
-			t.Errorf("From NewNet %s got Network.Version == %d, expect 4", tt.inaddrStr, ipnn.Version())
+		ipn := NewNet4(tt.ip, tt.masklen)
+		if ipn.Version() != IP4Version {
+			t.Errorf("From ParseCIDR %s got Network.Version == %d, expect 4", ipn, ipn.Version())
 		}
 	}
 }
 
 func TestNet4_Count(t *testing.T) {
 	for _, tt := range Network4Tests {
-		_, ipn, _ := ParseCIDR(tt.inaddrStr)
-		ipn4 := ipn.(Net4)
-		if ipn4.Count() != tt.count {
-			t.Errorf("On %s got Network.Count == %d, want %d", tt.inaddrStr, ipn4.Count(), tt.count)
+		ipn := NewNet4(tt.ip, tt.masklen)
+		if ipn.Count() != tt.count {
+			t.Errorf("On %s got Network.Count == %d, want %d", ipn, ipn.Count(), tt.count)
 		}
 	}
 }
 
 func TestNet4_FirstAddress(t *testing.T) {
 	for _, tt := range Network4Tests {
-		_, ipn, _ := ParseCIDR(tt.inaddrStr)
+		ipn := NewNet4(tt.ip, tt.masklen)
 		if addr := ipn.FirstAddress(); !tt.firstaddr.Equal(addr) {
-			t.Errorf("On %s got Network.FirstAddress == %v, want %v", tt.inaddrStr, addr, tt.firstaddr)
+			t.Errorf("On %s got Network.FirstAddress == %v, want %v", ipn, addr, tt.firstaddr)
 		}
 	}
 }
 
 func TestNet4_finalAddress(t *testing.T) {
 	for _, tt := range Network4Tests {
-		_, ipn, _ := ParseCIDR(tt.inaddrStr)
-		ipn4 := ipn.(Net4)
-		if addr, ones := ipn4.finalAddress(); !tt.broadcast.Equal(addr) {
-			t.Errorf("On %s got Network.finalAddress == %v, want %v mask length %d)", tt.inaddrStr, addr, tt.broadcast, ones)
+		ipn := NewNet4(tt.ip, tt.masklen)
+		if addr, ones := ipn.finalAddress(); !tt.broadcast.Equal(addr) {
+			t.Errorf("On %s got Network.finalAddress == %v, want %v mask length %d)", ipn, addr, tt.broadcast, ones)
 		}
 	}
 }
 
 func TestNet4_LastAddress(t *testing.T) {
 	for _, tt := range Network4Tests {
-		_, ipn, _ := ParseCIDR(tt.inaddrStr)
+		ipn := NewNet4(tt.ip, tt.masklen)
 		if addr := ipn.LastAddress(); !tt.lastaddr.Equal(addr) {
-			t.Errorf("On %s got Network.LastAddress == %v, want %v", tt.inaddrStr, addr, tt.lastaddr)
+			t.Errorf("On %s got Network.LastAddress == %v, want %v", ipn, addr, tt.lastaddr)
 		}
 	}
 }
 
 func TestNet4_NetworkAddress(t *testing.T) {
 	for _, tt := range Network4Tests {
-		_, ipn, _ := ParseCIDR(tt.inaddrStr)
+		ipn := NewNet4(tt.ip, tt.masklen)
 		if addr := ipn.IP(); !tt.network.Equal(addr) {
-			t.Errorf("On %s got Network.IP == %v, want %v", tt.inaddrStr, addr, tt.network)
+			t.Errorf("On %s got Network.IP == %v, want %v", ipn, addr, tt.network)
+		}
+	}
+}
+
+// ParseCIDR wraps net.ParseCIDR so it's redundant to test it except to make sure the wildcard is correct
+func TestParseCIDR(t *testing.T) {
+	for _, tt := range Network4Tests {
+		ipn := NewNet4(tt.ip, tt.masklen)
+		if ipn.Wildcard().String() != tt.wildcard.String() {
+			t.Errorf("On %s got Network.wildcard == %v, want %v", ipn, ipn.LastAddress(), tt.wildcard)
 		}
 	}
 }
@@ -418,7 +413,7 @@ func TestNet4_PreviousNet(t *testing.T) {
 		_, pneta, _ := ParseCIDR(tt.prevnet)
 		ipn4 := ipn.(Net4)
 
-		pnetb, _ := ipn4.PreviousNet(tt.prevmask)
+		pnetb := ipn4.PreviousNet(tt.prevmask)
 
 		if CompareNets(pneta, pnetb) != 0 {
 			t.Errorf("On Net{%s}.PreviousNet(%d) expected %s got %s", tt.in, tt.prevmask, tt.prevnet, pneta.String())
@@ -432,7 +427,7 @@ func TestNet4_NextNet(t *testing.T) {
 		_, pneta, _ := ParseCIDR(tt.nextnet)
 		ipn4 := ipn.(Net4)
 
-		pnetb, _ := ipn4.NextNet(tt.nextmask)
+		pnetb := ipn4.NextNet(tt.nextmask)
 
 		if CompareNets(pneta, pnetb) != 0 {
 			t.Errorf("On Net{%s}.NextNet(%d) expected %s got %s", tt.in, tt.nextmask, tt.nextnet, pneta.String())
