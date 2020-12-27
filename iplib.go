@@ -113,7 +113,7 @@ func BigintToIP6(z *big.Int) net.IP {
 			b = append([]byte{0}, b...)
 		}
 	}
-	return net.IP(b)
+	return b
 }
 
 // CompareIPs is just a thin wrapper around bytes.Compare, but is here for
@@ -213,10 +213,7 @@ func DeltaIP6(a, b net.IP) *big.Int {
 	bi := IPToBigint(b)
 	i := big.NewInt(0)
 
-	if v := ai.Cmp(bi); v >= 0 {
-		return i.Sub(ai, bi)
-	}
-	return i.Sub(bi, ai)
+	return i.Sub(ai, bi).Abs(i)
 }
 
 // EffectiveVersion returns 4 if the net.IP either contains a v4 address or if
@@ -245,7 +242,7 @@ func ExpandIP6(ip net.IP) string {
 	var h []byte
 	var s string
 	h = make([]byte, hex.EncodedLen(len(ip.To16())))
-	hex.Encode(h, []byte(ip))
+	hex.Encode(h, ip)
 	for i, c := range h {
 		if i%4 == 0 {
 			s = s + ":"
@@ -310,7 +307,7 @@ func IP6ToARPA(ip net.IP) string {
 	var h []byte
 	var s string
 	h = make([]byte, hex.EncodedLen(len(ip)))
-	hex.Encode(h, []byte(ip))
+	hex.Encode(h, ip)
 
 	for i := len(h) - 1; i >= 0; i-- {
 		s = s + string(h[i]) + "."
@@ -372,7 +369,7 @@ func IP6ToUint64(ip net.IP) uint64 {
 // the supplied integer value. If you overflow the IP space it will return
 // the all-ones address
 func IncrementIPBy(ip net.IP, count uint32) net.IP {
-	if Version(ip) == IP4Version {
+	if EffectiveVersion(ip) == IP4Version {
 		return IncrementIP4By(ip, count)
 	}
 	z := big.NewInt(int64(count))
@@ -421,7 +418,7 @@ func Is4in6(ip net.IP) bool {
 }
 
 // IsAllOnes returns true if the supplied net.IP is the all-zeroes address,
-// if given a 6-to-4 address this function will treat it as IPv4
+// if given a 4-in-6 address this function will treat it as IPv4
 func IsAllOnes(ip net.IP) bool {
 	if EffectiveVersion(ip) == 4 {
 		ip = ForceIP4(ip)
@@ -453,19 +450,17 @@ func IsAllZeroes(ip net.IP) bool {
 // 4x faster on v6 than IncrementIP6By(1). The bundled tests provide
 // benchmarks doing so, as well as iterating over the entire v4 address space.
 func NextIP(ip net.IP) net.IP {
-	var ipn []byte
-	if Version(ip) == IP4Version {
-		ipn = make([]byte, 4)
-		copy(ipn, ip)
+	var xip []byte
+	if  EffectiveVersion(ip) == IP4Version {
+		xip = getCloneIP(ForceIP4(ip))
 	} else {
-		ipn = make([]byte, 16)
-		copy(ipn, ip)
+		xip = getCloneIP(ip)
 	}
 
-	for i := len(ipn) - 1; i >= 0; i-- {
-		ipn[i]++
-		if ipn[i] > 0 {
-			return ipn
+	for i := len(xip) - 1; i >= 0; i-- {
+		xip[i]++
+		if xip[i] > 0 {
+			return xip
 		}
 	}
 	return ip // if we're already at the end of range, don't wrap
@@ -476,19 +471,17 @@ func NextIP(ip net.IP) net.IP {
 // 4x faster on v6 than DecrementIP6By(1). The bundled tests provide
 // benchmarks doing so, as well as iterating over the entire v4 address space.
 func PreviousIP(ip net.IP) net.IP {
-	var ipn []byte
-	if Version(ip) == IP4Version {
-		ipn = make([]byte, 4)
-		copy(ipn, ip.To4())
+	var xip []byte
+	if EffectiveVersion(ip) == IP4Version {
+		xip = getCloneIP(ForceIP4(ip))
 	} else {
-		ipn = make([]byte, 16)
-		copy(ipn, ip)
+		xip = getCloneIP(ip)
 	}
 
-	for i := len(ipn) - 1; i >= 0; i-- {
-		ipn[i]--
-		if ipn[i] != 255 {
-			return ipn
+	for i := len(xip) - 1; i >= 0; i-- {
+		xip[i]--
+		if xip[i] != 255 {
+			return xip
 		}
 	}
 	return ip // if we're already at beginning of range, don't wrap
@@ -535,4 +528,11 @@ func generateNetLimits(version int, filler byte) net.IP {
 		b[i] = filler
 	}
 	return b
+}
+
+func getCloneIP(ip net.IP) net.IP {
+	var xip []byte
+	xip = make([]byte, len(ip))
+	copy(xip, ip)
+	return xip
 }

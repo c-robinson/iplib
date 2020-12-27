@@ -17,45 +17,45 @@ var IPTests = []struct {
 	binval string
 }{
 	{
-		net.IP{10, 1, 2, 3},
-		net.IP{10, 1, 2, 4},
-		net.IP{10, 1, 2, 2},
+		net.ParseIP("10.1.2.3"),
+		net.ParseIP("10.1.2.4"),
+		net.ParseIP("10.1.2.2"),
 		167838211,
 		"0a010203",
 		"3.2.1.10.in-addr.arpa",
 		"00001010.00000001.00000010.00000011",
 	},
 	{
-		net.IP{10, 1, 2, 255},
-		net.IP{10, 1, 3, 0},
-		net.IP{10, 1, 2, 254},
+		net.ParseIP("10.1.2.255"),
+		net.ParseIP("10.1.3.0"),
+		net.ParseIP("10.1.2.254"),
 		167838463,
 		"0a0102ff",
 		"255.2.1.10.in-addr.arpa",
 		"00001010.00000001.00000010.11111111",
 	},
 	{
-		net.IP{10, 1, 2, 0},
-		net.IP{10, 1, 2, 1},
-		net.IP{10, 1, 1, 255},
+		net.ParseIP("10.1.2.0"),
+		net.ParseIP("10.1.2.1"),
+		net.ParseIP("10.1.1.255"),
 		167838208,
 		"0a010200",
 		"0.2.1.10.in-addr.arpa",
 		"00001010.00000001.00000010.00000000",
 	},
 	{
-		net.IP{255, 255, 255, 255},
-		net.IP{255, 255, 255, 255},
-		net.IP{255, 255, 255, 254},
+		net.ParseIP("255.255.255.255"),
+		net.ParseIP("255.255.255.255"),
+		net.ParseIP("255.255.255.254"),
 		4294967295,
 		"ffffffff",
 		"255.255.255.255.in-addr.arpa",
 		"11111111.11111111.11111111.11111111",
 	},
 	{
-		net.IP{0, 0, 0, 0},
-		net.IP{0, 0, 0, 1},
-		net.IP{0, 0, 0, 0},
+		net.ParseIP("0.0.0.0"),
+		net.ParseIP("0.0.0.1"),
+		net.ParseIP("0.0.0.0"),
 		0,
 		"00000000",
 		"0.0.0.0.in-addr.arpa",
@@ -290,41 +290,41 @@ var IPDeltaTests = []struct {
 	decres uint32
 }{
 	{
-		net.IP{192, 168, 2, 2},
-		net.IP{192, 168, 1, 1},
-		net.IP{192, 168, 3, 3},
+		net.ParseIP("192.168.2.2"),
+		net.ParseIP("192.168.1.1"),
+		net.ParseIP("192.168.3.3"),
 		257,
 		257,
 		257,
 	},
 	{
-		net.IP{10, 0, 0, 0},
-		net.IP{9, 0, 0, 0},
-		net.IP{11, 0, 0, 0},
+		net.ParseIP("10.0.0.0"),
+		net.ParseIP("9.0.0.0"),
+		net.ParseIP("11.0.0.0"),
 		16777216,
 		16777216,
 		16777216,
 	},
 	{
-		net.IP{255, 255, 255, 0},
-		net.IP{255, 255, 252, 0},
-		net.IP{255, 255, 255, 255},
+		net.ParseIP("255.255.255.0"),
+		net.ParseIP("255.255.252.0"),
+		net.ParseIP("255.255.255.255"),
 		768,
 		255,
 		768,
 	},
 	{
-		net.IP{0, 0, 0, 255},
-		net.IP{0, 0, 0, 0},
-		net.IP{0, 0, 3, 255},
+		net.ParseIP("0.0.0.255"),
+		net.ParseIP("0.0.0.0"),
+		net.ParseIP("0.0.3.255"),
 		768,
 		768,
 		255,
 	},
 	{
-		net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 46, 3, 112, 115, 52},
-		net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 46, 3, 112, 115, 28},
-		net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 46, 3, 112, 115, 76},
+		net.ParseIP("2001:db8:85a3::8a2e:370:7334"),
+		net.ParseIP("2001:db8:85a3::8a2e:370:731c"),
+		net.ParseIP("2001:db8:85a3::8a2e:370:734c"),
 		24,
 		24,
 		24,
@@ -374,25 +374,26 @@ var IPDelta6Tests = []struct {
 	decres string
 }{
 	{
-		net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 46, 3, 112, 115, 52},
-		net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 45, 3, 112, 115, 52},
-		net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 47, 3, 112, 115, 52},
+		// THIS IS JUST FOR TESTING, THE ONE BELOW IS FOR FIXING
+		net.ParseIP("2001:db8:85a3::8a2e:370:7334"),
+		net.ParseIP("2001:db8:85a3::8a2d:370:7334"),
+		net.ParseIP("2001:db8:85a3::8a2f:370:7334"),
 		"4294967296",
 		"4294967296",
 		"4294967296",
 	},
 	{
-		net.IP{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 0},
-		net.IP{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 251, 0},
-		net.IP{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255},
+		net.ParseIP("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ff00"),
+		net.ParseIP("ffff:ffff:ffff:ffff:ffff:ffff:ffff:fb00"),
+		net.ParseIP("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"),
 		"1024",
 		"255",
 		"1024",
 	},
 	{
-		net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255},
-		net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 255},
+		net.ParseIP("::ff"),
+		net.ParseIP("::"),
+		net.ParseIP("::4ff"),
 		"1024",
 		"1024",
 		"255",
@@ -442,57 +443,18 @@ var IPVersionTests = []struct {
 	version  int
 	eversion int
 }{
-	{
-		net.IP{0, 0, 0, 0},
-		4,
-		4,
-	},
-	{
-		net.IP{192, 168, 1, 1},
-		4,
-		4,
-	},
-	{
-		net.IP{255, 255, 255, 255},
-		4,
-		4,
-	},
-	{
-		net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-		6,
-		6,
-	},
-	{
-		net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 46, 3, 112, 115, 52},
-		6,
-		6,
-	},
-	{
-		net.IP{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255},
-		6,
-		6,
-	},
-	{
-		nil,
-		0,
-		0,
-	},
-	// these are the 6-to-4 versions of the first 3 test cases
-	{
-		net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 0, 0, 0, 0},
-		6,
-		4,
-	},
-	{
-		net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 192, 168, 1, 1},
-		6,
-		4,
-	},
-	{
-		net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 255, 255, 255},
-		6,
-		4,
-	},
+	// ParseIP() *always* returns 4-in-6 addresses, so we specify exactly what
+	// we want here
+	{net.IP{0, 0, 0, 0}, 4, 4 },
+	{net.IP{192, 168, 1, 1}, 4, 4 },
+	{net.IP{255, 255, 255, 255}, 4, 4 },
+	{net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 6, 6 },
+	{net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 46, 3, 112, 115, 52}, 6, 6 },
+	{net.IP{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255}, 6, 6 },
+	// these are the 4-in-6 versions of the first 3 test cases
+	{net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 0, 0, 0, 0}, 6, 4 },
+	{net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 192, 168, 1, 1}, 6, 4 },
+	{net.IP{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 255, 255, 255}, 6, 4 },
 }
 
 func Test_Version(t *testing.T) {
@@ -518,17 +480,17 @@ var compareIPTests = []struct {
 	ipaddr net.IP
 	status int
 }{
-	{8, net.IP{192, 168, 2, 3}, -1},
-	{1, net.IP{10, 0, 0, 3}, 1},
-	{0, net.IP{10, 0, 0, 1}, 1},
-	{10, net.IP{192, 168, 3, 255}, -1},
-	{9, net.IP{192, 168, 3, 1}, -1},
-	{2, net.IP{10, 0, 1, 0}, 1},
-	{7, net.IP{192, 168, 1, 1}, -1},
-	{3, net.IP{44, 0, 0, 1}, 1},
-	{4, net.IP{44, 0, 1, 0}, 0},
-	{5, net.IP{44, 1, 0, 0}, -1},
-	{6, net.IP{170, 1, 12, 1}, -1},
+	{8, net.ParseIP("192.168.2.3"), -1},
+	{1, net.ParseIP("10.0.0.3"), 1},
+	{0, net.ParseIP("10.0.0.1"), 1},
+	{10, net.ParseIP("192.168.3.255"), -1},
+	{9, net.ParseIP("192.168.3.1"), -1},
+	{2, net.ParseIP("10.0.1.0"), 1},
+	{7, net.ParseIP("192.168.1.1"), -1},
+	{3, net.ParseIP("44.0.0.1"), 1},
+	{4, net.ParseIP("44.0.1.0"), 0},
+	{5, net.ParseIP("44.1.0.0"), -1},
+	{6, net.ParseIP("170.1.12.1"), -1},
 }
 
 func TestCompareIPs(t *testing.T) {
@@ -545,6 +507,50 @@ func TestCompareIPs(t *testing.T) {
 	for _, b := range compareIPTests {
 		if a1[b.pos].String() != b.ipaddr.String() {
 			t.Errorf("Expected %s at position %d, but found %s", b.ipaddr, b.pos, a1[b.pos])
+		}
+	}
+}
+
+var isAllTests = []struct{
+	ipaddr net.IP
+	isones bool
+	iszero bool
+	is4in6 bool
+}{
+	{ net.IP{0,0,0,0}, false, true, false },
+	{ net.IP{255,255,255,255}, true, false, false },
+	{ net.IP{192,168,1,1}, false, false, false },
+	{ net.ParseIP("::ffff:0:0"), false, true, true },
+	{ net.ParseIP("::ffff:ffff:ffff"), true, false, true },
+	{ net.ParseIP("::ffff:c0a8:0101"), false, false, true },
+	{ net.ParseIP("::"), false, true, false },
+	{ net.ParseIP("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"), true, false, false },
+	{ net.ParseIP("2001:db8::1"), false, false, false },
+}
+
+func TestIs4in6(t *testing.T) {
+	for _, tt := range isAllTests {
+		v := Is4in6(tt.ipaddr)
+		if v != tt.is4in6 {
+			t.Errorf("%s: expected %t got %t", tt.ipaddr, tt.is4in6, v)
+		}
+	}
+}
+
+func TestIsAllOnes(t *testing.T) {
+	for _, tt := range isAllTests {
+		v := IsAllOnes(tt.ipaddr)
+		if v != tt.isones {
+			t.Errorf("%s: expected %t got %t", tt.ipaddr, tt.isones, v)
+		}
+	}
+}
+
+func TestIsAllZeroes(t *testing.T) {
+	for _, tt := range isAllTests {
+		v := IsAllZeroes(tt.ipaddr)
+		if v != tt.iszero {
+			t.Errorf("%s: expected %t got %t", tt.ipaddr, tt.iszero, v)
 		}
 	}
 }
