@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/big"
 	"net"
-	//"github.com/c-robinson/
 )
 
 func ExampleBigintToIP6() {
