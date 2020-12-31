@@ -284,7 +284,7 @@ var incr4Tests = []struct {
 		"192.168.1.0/32",
 		net.IP{192, 168, 1, 0},
 		net.IP{},
-		ErrAddressAtEndOfRange,
+		nil,
 	},
 }
 
@@ -330,7 +330,7 @@ var decr4Tests = []struct {
 		"192.168.3.0/24",
 		net.IP{192, 168, 3, 0},
 		net.IP{},
-		ErrAddressAtEndOfRange,
+		nil,
 	},
 	{
 		"192.168.4.0/24",
@@ -348,7 +348,7 @@ var decr4Tests = []struct {
 		"192.168.1.0/32",
 		net.IP{192, 168, 1, 0},
 		net.IP{},
-		ErrAddressAtEndOfRange,
+		nil,
 	},
 }
 

@@ -145,11 +145,10 @@ func (n Net4) NetworkAddress() net.IP {
 }
 
 // NextIP takes a net.IP as an argument and attempts to increment it by one.
-// If the input is outside of the range of the represented network it will
-// return an empty net.IP and an ErrAddressOutOfRange. If the resulting address
-// is out of range it will return an empty net.IP and an ErrAddressAtEndOfRange.
-// If the result is the broadcast address, the address _will_ be returned, but
-// so will an ErrBroadcastAddress, to indicate that the address is technically
+// If the resulting address is outside of the range of the represented network
+// it will return an empty net.IP and an ErrAddressOutOfRange. If the result
+// is the broadcast address, the address _will_ be returned, but so will an
+// ErrBroadcastAddress, to indicate that the address is technically
 // outside the usable scope
 func (n Net4) NextIP(ip net.IP) (net.IP, error) {
 	if !n.Contains(ip) {
@@ -157,7 +156,7 @@ func (n Net4) NextIP(ip net.IP) (net.IP, error) {
 	}
 	xip := NextIP(ip)
 	if !n.Contains(xip) {
-		return net.IP{}, ErrAddressAtEndOfRange
+		return net.IP{}, ErrAddressOutOfRange
 	}
 	// if this is the broadcast address, return it but warn the caller via error
 	if n.BroadcastAddress().Equal(xip) {
@@ -173,19 +172,18 @@ func (n Net4) NextNet(masklen int) Net4 {
 }
 
 // PreviousIP takes a net.IP as an argument and attempts to decrement it by
-// one. If the input is outside of the range of the represented network it will
-// return an empty net.IP and an ErrAddressOutOfRange. If the resulting address
-// is out of range it will return an empty net.IP and ErrAddressAtEndOfRange.
-// If the result is the network address, the address _will_ be returned, but
-// so will an ErrNetworkAddress, to indicate that the address is technically
-// outside the usable scope
+// one. If the resulting address is outside of the range of the represented
+// network it will return an empty net.IP and an ErrAddressOutOfRange. If the
+// result is the network address, the address _will_ be returned, but so will
+// an ErrNetworkAddress, to indicate that the address is technically outside
+// the usable scope
 func (n Net4) PreviousIP(ip net.IP) (net.IP, error) {
 	if !n.Contains(ip) {
 		return net.IP{}, ErrAddressOutOfRange
 	}
 	xip := PreviousIP(ip)
 	if !n.Contains(xip) {
-		return net.IP{}, ErrAddressAtEndOfRange
+		return net.IP{}, ErrAddressOutOfRange
 	}
 	// if this is the network address, return it but warn the caller via error
 	if n.IP().Equal(xip) {
