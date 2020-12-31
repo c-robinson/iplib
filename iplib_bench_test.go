@@ -170,7 +170,7 @@ func BenchmarkNet_PreviousNet_v4(b *testing.B) {
 	n4 := n.(Net4)
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = n4.PreviousNet(24)
+		_ = n4.PreviousNet(24)
 	}
 }
 
@@ -179,7 +179,7 @@ func BenchmarkNet_PreviousNet_v6(b *testing.B) {
 	n6 := n.(Net6)
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = n6.PreviousNet(24)
+		_ = n6.PreviousNet(24)
 	}
 }
 
@@ -188,7 +188,7 @@ func BenchmarkNet_NextNet_v4(b *testing.B) {
 	n4 := n.(Net4)
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = n4.NextNet(24)
+		_ = n4.NextNet(24)
 	}
 }
 
@@ -197,7 +197,7 @@ func BenchmarkNet_NextNet_v6(b *testing.B) {
 	n6 := n.(Net6)
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = n6.NextNet(24)
+		_ = n6.NextNet(24)
 	}
 }
 
@@ -209,14 +209,21 @@ func BenchmarkNewNetBetween_v4(b *testing.B) {
 	}
 }
 
-// Sorry for  abusing the benchmark suite here, i just think it's kind of neat
-// to see how quickly one can allocate the entire v4 space in a Go application
-func BenchmarkNextIP_EntireV4Space(b *testing.B) {
-	xip := net.IP{0, 0, 0, 0}
-	b.N = 4294967294
-	b.StartTimer()
-	for i := 0; i <= b.N; i++ {
-		xip = NextIP(xip)
+func BenchmarkNet6_nextIPWithinHostmask(b *testing.B) {
+	var xip = net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 46, 3, 112, 115, 52}
+	hm := NewHostMask(8)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		xip, _ = nextIPWithinHostmask(xip, hm)
 	}
-	b.StopTimer()
+}
+
+func BenchmarkNet6_incrementIP6WithinHostmask(b *testing.B) {
+	var xip = net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 46, 3, 112, 115, 52}
+	count := big.NewInt(1)
+	hm := NewHostMask(8)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		xip, _ = IncrementIP6WithinHostmask(xip, hm, count)
+	}
 }
