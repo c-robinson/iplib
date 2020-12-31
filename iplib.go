@@ -25,14 +25,14 @@ There are also two submodules under iplib: the iplib/iid module contains
 functions for generating RFC 7217-compliant IPv6 Interface ID addresses, and
 iplib/iana imports the IANA IP Special Registries and exposes functions for
 comparing IP addresses against those registries to determine if the IP is part
-of a special reservation (for example RFC 1918 private networks or the RFC 3849
-documentation network).
+of a special reservation (for example RFC 1918 private networks or the RFC
+3849 documentation network).
 
-A special note about IP blocks with one host bit set (/31, /127): RFC3021 (v4)
-and RFC6164 (v6) describe a case for using these netblocks to number each end
-of a point-to-point link between routers. In v6 this is outside the normal
-limit of a network mask and for v4 it would normally produce a block with no
-usable addresses. To satisfy the RFCs the following changes are made:
+A special note about IP blocks with one host bit set (/31, /127): RFC 3021
+(v4) and RFC 6164 (v6) describe a case for using these netblocks to number
+each end of a point-to-point link between routers. In v6 this is outside the
+normal limit of a network mask and for v4 it would normally produce a block
+with no usable addresses. To satisfy the RFCs the following changes are made:
 
 - Count() will report 2 addresses instead of 0
 
@@ -57,14 +57,18 @@ import (
 const (
 	// MaxIPv4 is the max size of a uint32, also the IPv4 address space
 	MaxIPv4 = 1<<32 - 1
+
+	// MaxUint is the max size of a uint64
 	MaxUint = 1<<64 - 1
 
+	// IP4Version is the label returned by IPv4 addresses
 	IP4Version = 4
+
+	// IP6Version is the lavel returnedby IPv6 addresses
 	IP6Version = 6
 )
 
 var (
-	ErrAddressAtEndOfRange = errors.New("proposed operation would cause address to exit block")
 	ErrAddressOutOfRange   = errors.New("the given IP address is not a part of this netblock")
 	ErrBadMaskLength       = errors.New("illegal mask length provided")
 	ErrBroadcastAddress    = errors.New("address is the broadcast address of this netblock (and not considered usable)")
@@ -417,7 +421,7 @@ func Is4in6(ip net.IP) bool {
 	return false
 }
 
-// IsAllOnes returns true if the supplied net.IP is the all-zeroes address,
+// IsAllOnes returns true if the supplied net.IP is the all-ones address,
 // if given a 4-in-6 address this function will treat it as IPv4
 func IsAllOnes(ip net.IP) bool {
 	if EffectiveVersion(ip) == 4 {
@@ -431,7 +435,7 @@ func IsAllOnes(ip net.IP) bool {
 	return true
 }
 
-// IsAllOnes returns true if the supplied net.IP is the all-ones address, if
+// IsAllZeroes returns true if the supplied net.IP is the all-zero address, if
 // given a 4-in-6 address this function will treat it as IPv4
 func IsAllZeroes(ip net.IP) bool {
 	if EffectiveVersion(ip) == 4 {
