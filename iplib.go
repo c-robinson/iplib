@@ -69,7 +69,7 @@ const (
 )
 
 var (
-	ErrAddressOutOfRange   = errors.New("the given IP address is not a part of this netblock")
+	ErrAddressOutOfRange   = errors.New("address is not a part of this netblock")
 	ErrBadMaskLength       = errors.New("illegal mask length provided")
 	ErrBroadcastAddress    = errors.New("address is the broadcast address of this netblock (and not considered usable)")
 	ErrNetworkAddress      = errors.New("address is the network address of this netblock (and not considered usable)")
