@@ -143,58 +143,58 @@ var IPHostmaskDeltaTests = []struct {
 	next     net.IP
 	nextErr  error
 }{
-	{
+	{ // 0
 		net.ParseIP("2001:db8:1234:5678::"), 0,
 		net.ParseIP("2001:db8:1234:5677:ffff:ffff:ffff:fc18"), nil,
 		net.ParseIP("2001:db8:1234:5678::3e8"), nil,
 		net.ParseIP("2001:db8:1234:5677:ffff:ffff:ffff:ffff"), nil,
 		net.ParseIP("2001:db8:1234:5678::1"), nil,
-	},{
+	},{ // 1
 		net.ParseIP("2001:db8:1234:5678:9900::"), 56,
 		net.ParseIP("2001:db8:1234:5674:b100::"), nil,
 		net.ParseIP("2001:db8:1234:567c:8100::"), nil,
 		net.ParseIP("2001:db8:1234:5678:9800::"), nil,
 		net.ParseIP("2001:db8:1234:5678:9a00::"), nil,
-	},{
+	},{ // 2
 		net.ParseIP("2001:db8:1234:5678:ff00::"), 56,
 		net.ParseIP("2001:db8:1234:5675:1700::"), nil,
 		net.ParseIP("2001:db8:1234:567c:e700::"), nil,
 		net.ParseIP("2001:db8:1234:5678:fe00::"), nil,
 		net.ParseIP("2001:db8:1234:5679::"), nil,
-	},{
+	},{ // 3
 		net.ParseIP("::"), 56,
 		net.ParseIP(""), ErrAddressOutOfRange,
 		net.ParseIP("::3:e800:0:0:0"), nil,
 		net.IP{}, ErrAddressOutOfRange,
 		net.ParseIP("::100:0:0:0"), nil,
-	},{
+	},{ // 4
 		net.ParseIP("ffff:ffff:ffff:ffff:ff00::"), 56,
 		net.ParseIP("ffff:ffff:ffff:fffc:1700::"), nil,
 		net.IP{}, ErrAddressOutOfRange,
 		net.ParseIP("ffff:ffff:ffff:ffff:fe00::"), nil,
 		net.IP{}, ErrAddressOutOfRange,
-	},{
+	},{ // 5
 		net.ParseIP("2001:db8:1234:5678:9906::"), 53,
 		net.ParseIP("2001:db8:1234:5678:1c06::"), nil,
 		net.ParseIP("2001:db8:1234:5679:1606::"), nil,
 		net.ParseIP("2001:db8:1234:5678:9905::"), nil,
 		net.ParseIP("2001:db8:1234:5678:9907::"), nil,
-	},{
+	},{ // 6
 		net.ParseIP("2001:db8:1234:5678:9907::"), 53,
 		net.ParseIP("2001:db8:1234:5678:1c07::"), nil,
 		net.ParseIP("2001:db8:1234:5679:1607::"), nil,
 		net.ParseIP("2001:db8:1234:5678:9906::"), nil,
 		net.ParseIP("2001:db8:1234:5678:9a00::"), nil,
-	},{
+	},{ // 7
 		net.ParseIP("2001:db8:1234:5678:9908::"), 53,
 		net.ParseIP(""), ErrAddressOutOfRange,
-		net.IP{}, ErrAddressOutOfRange,
-		net.IP{}, ErrAddressOutOfRange,
-		net.IP{}, ErrAddressOutOfRange,
-	},{
+		net.ParseIP("2001:db8:1234:5679:1700::"), nil,
+		net.ParseIP("2001:db8:1234:5678:9907::"), nil,
+		net.ParseIP("2001:db8:1234:5678:9909::"), nil,
+	},{ // 8
 		net.ParseIP("2001:db8:1234:5678:ff::"), 56,
 		net.ParseIP(""), ErrAddressOutOfRange,
-		net.IP{}, ErrAddressOutOfRange,
+		net.ParseIP("2001:db8:1234:567c:e700::"), nil,
 		net.ParseIP(""), ErrAddressOutOfRange,
 		net.ParseIP(""), ErrAddressOutOfRange,
 	},
@@ -250,7 +250,7 @@ func TestPreviousIPWithinHostmask(t *testing.T) {
 	for i, tt := range IPHostmaskDeltaTests {
 		prev, err := PreviousIP6WithinHostmask(tt.ipaddr, NewHostMask(tt.hostmask))
 		if e := compareErrors(err, tt.prevErr); len(e) > 0 {
-			t.Errorf("[%d] %s", i, e)
+			t.Errorf("[%d] %s (%s)", i, e, prev)
 		} else {
 			x := CompareIPs(prev, tt.prev)
 			if x != 0 {

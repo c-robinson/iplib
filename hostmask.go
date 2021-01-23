@@ -17,7 +17,7 @@ import (
 // next IP from 2001:db8:1234:5678:: would be 2001:db8:1234:5679 instead of
 // 2001:db8:1234:5678::1.
 //
-// One important: even though bytes are filled in from the right, the bits
+// One important note: even though bytes are filled in from the right the bits
 // within those bytes are still blocked out left-to-right, so that address
 // incrementing/decrementing makes sense to the end user, as shown here:
 //
@@ -54,25 +54,6 @@ func NewHostMask(masklen int) HostMask {
 	return mask
 }
 
-// Size returns the number of ones and total bits in the mask
-func (m HostMask) Size() (int, int) {
-	ones := 0
-	bits := 128
-	for i := len(m) - 1; i >= 0; i-- {
-		b := m[i]
-		if b == 0xff {
-			ones += 8
-			continue
-		}
-		for b&0x80 != 0 {
-			ones++
-			b <<= 1
-		}
-		break
-	}
-	return ones, bits
-}
-
 // BoundaryByte returns the rightmost byte in the mask in which any bits fall
 // inside the hostmask, as well as the position of that byte. For example a
 // masklength of 58 would return "0xc0, 8" while 32 would return "0xff, 12".
@@ -91,6 +72,25 @@ func (m HostMask) BoundaryByte() (byte, int) {
 	pos := 15 - quo
 
 	return m[pos], pos
+}
+
+// Size returns the number of ones and total bits in the mask
+func (m HostMask) Size() (int, int) {
+	ones := 0
+	bits := 128
+	for i := len(m) - 1; i >= 0; i-- {
+		b := m[i]
+		if b == 0xff {
+			ones += 8
+			continue
+		}
+		for b&0x80 != 0 {
+			ones++
+			b <<= 1
+		}
+		break
+	}
+	return ones, bits
 }
 
 // String returns the hexadecimal form of m, with no punctuation
@@ -166,9 +166,6 @@ func IncrementIP6WithinHostmask(ip net.IP, hm HostMask, count *big.Int) (net.IP,
 			return net.IP{}, ErrAddressOutOfRange
 		}
 	}
-	if ip[bbpos] + bb < bb {
-		return net.IP{}, ErrAddressOutOfRange
-	}
 
 	bb = incrementBoundaryByte(bb, ip[bbpos], xcount)
 	xip := incrementUnmaskedBytes(ip[:bbpos], xcount)
@@ -189,42 +186,22 @@ func IncrementIP6WithinHostmask(ip net.IP, hm HostMask, count *big.Int) (net.IP,
 // inside the hostmask are set, an empty net.IP{} and an ErrAddressOutOfRange
 // will be returned
 func NextIP6WithinHostmask(ip net.IP, hm HostMask) (net.IP, error) {
-	bb, bbpos := hm.BoundaryByte()
-
-	if bbpos == -1 {
-		return NextIP(ip), nil
-	}
-
-	bbmax := 255-bb
-
 	xip := getCloneIP(ip)
 
-	for i := len(xip)-1 ; i >= 0 ; i-- {
-
-		if i > bbpos {
+	for i := len(xip) -1; i >= 0; i-- {
+		if hm[i] == 0xff {
 			if xip[i] > 0 {
 				return net.IP{}, ErrAddressOutOfRange
 			}
+			continue
+		}
+		if (xip[i] | hm[i]) == 0xff {
+			// xip[i] is the boundary byte, and the accessible bits are at max
 			xip[i] = 0
 			continue
 		}
-
-		// the boundary byte may have some mask bits so we need to handle
-		// overflows
-		if i == bbpos {
-			if xip[i] > bbmax {
-				return net.IP{}, ErrAddressOutOfRange
-			}
-			xip[i]++
-			if xip[i] > bbmax {
-				xip[i] = 0
-				continue
-			} else {
-				return xip, nil
-			}
-		}
-
 		xip[i]++
+
 		if xip[i] > 0 {
 			return xip, nil
 		}
@@ -237,44 +214,48 @@ func NextIP6WithinHostmask(ip net.IP, hm HostMask) (net.IP, error) {
 // If bits inside the hostmask are set, an empty net.IP{} and an
 // ErrAddressOutOfRange will be returned
 func PreviousIP6WithinHostmask(ip net.IP, hm HostMask) (net.IP, error) {
-	bb, bbpos := hm.BoundaryByte()
-
-	if bbpos == -1 {
-		return PreviousIP(ip), nil
-	}
-	bbmax := 255-bb
-
 	xip := getCloneIP(ip)
+	bb, bbpos := hm.BoundaryByte()
+	bbmax := 0xff-bb
 
-	for i := len(xip)-1 ; i >= 0 ; i-- {
-		if i > bbpos {
+	for i := len(xip) -1; i >= 0; i-- {
+		if hm[i] == 0xff {
 			if xip[i] > 0 {
 				return net.IP{}, ErrAddressOutOfRange
 			}
-			xip[i] = 0
-			continue
-		}
-
-		// the boundary byte may have some mask bits so we need to validate
-		// against mask violations
-		if i == bbpos {
-			if xip[i] > bbmax {
-				return net.IP{}, ErrAddressOutOfRange
-			}
-			xip[i]--
-			if xip[i] != 255 {
-				return xip, nil
-			}
-			xip[i] = bbmax
 			continue
 		}
 
 		xip[i]--
+
 		if xip[i] != 255 {
+			if i == bbpos-1 {
+				// if we underflowed into the boundary byte we need to adjust
+				// it to it's actual max, not 0xff
+				xip[bbpos] = bbmax
+			}
 			return xip, nil
 		}
 	}
 	return net.IP{}, ErrAddressOutOfRange
+}
+
+// boundaryByte implements HostMask.BoundaryByte() but makes it available for
+// finding the byte position for net.IPMask as well
+func boundaryByte(m net.IPMask) (byte, int) {
+	hmlen, _ := m.Size() // will be between 0 and 128, where 0 is "no mask"
+
+	if hmlen == 0 {
+		return 0x00, -1
+	}
+
+	quo, mod := hmlen / 8, hmlen % 8
+	if mod == 0 {
+		quo--
+	}
+	pos := 15 - quo
+
+	return m[pos], pos
 }
 
 // decrementBoundaryByte takes a boundary-byte, a boundary-value and a count
@@ -283,38 +264,21 @@ func PreviousIP6WithinHostmask(ip net.IP, hm HostMask) (net.IP, error) {
 // count + bv is divided by that max. The function will return the modulus
 // as a byte value, and the pointer to count will have the quotient
 func decrementBoundaryByte(bb, bv byte, count *big.Int) byte {
+	bmax := 256-int(bb) // max value of unmasked byte as int
 	if v := count.Cmp(big.NewInt(0)); v <= 0 {
 		return bv
 	}
+	bigbmax := big.NewInt(int64(bmax))
+	bigmod := new(big.Int)
 
-	bbmax := big.NewInt(256-int64(bb)) // max value of unmasked byte as an int
-	bbval := big.NewInt(int64(bv))     // cur value of unmasked byte as an int
-
-	// if count is less than bbval, subtract count from bbval and return
-	if v := count.Cmp(bbval); v < 1 {
-		b := bbval.Sub(bbval, count).Bytes()
-		count.Set(big.NewInt(0))
-		if len(b) == 0 {
-			return 0
-		}
-		return b[0]
+	count.DivMod(count, bigbmax, bigmod)
+	mod64 := bigmod.Int64()
+	mod := byte(mod64)
+	if mod > bv {
+		count.Add(count, big.NewInt(1))
+		return (byte(bmax) + bv) - mod
 	}
-
-	count.Add(count, bbval)
-
-	if v := count.Cmp(big.NewInt(0)); v <= 0 {
-		return bv
-	}
-
-	rem := new(big.Int)
-
-	// ...divide the rest by bbmax
-	count.DivMod(count, bbmax, rem)
-	brem := rem.Bytes()
-	if len(brem) == 0 {
-		return byte(0)
-	}
-	return rem.Bytes()[0]
+	return bv - mod
 }
 
 // decrementUnmaskedBytes decrements an arbitrary []byte by count and returns
@@ -346,13 +310,13 @@ func incrementBoundaryByte(bb, bv byte, count *big.Int) byte {
 		return bv
 	}
 
-	bbmax := big.NewInt(256-int64(bb)) // max value of unmasked byte as an int
-	bbval := big.NewInt(int64(bv))     // cur value of unmasked byte as an int
+	bigbmax := big.NewInt(256-int64(bb)) // max value of unmasked byte as an int
+	bigbval := big.NewInt(int64(bv))     // cur value of unmasked byte as an int
 
-	count.Add(count, bbval)
+	count.Add(count, bigbval)
 
-	// if count is less than bbmax, we're done
-	if v := count.Cmp(bbmax); v < 1 {
+	// if count is less than bmax, we're done
+	if v := count.Cmp(bigbmax); v < 0 {
 		b := count.Bytes()
 		count.Set(big.NewInt(0))
 		if len(b) == 0 {
@@ -361,14 +325,14 @@ func incrementBoundaryByte(bb, bv byte, count *big.Int) byte {
 		return b[0]
 	}
 
-	rem := new(big.Int)
+	bigmod := new(big.Int)
 
-	count.DivMod(count, bbmax, rem)
-	brem := rem.Bytes()
-	if len(brem) == 0 {
+	count.DivMod(count, bigbmax, bigmod)
+	mod := bigmod.Bytes()
+	if len(mod) == 0 {
 		return byte(0)
 	}
-	return brem[0]
+	return mod[0]
 }
 
 // incrementUnmaskedBytes increments an arbitrary []byte by count and returns
