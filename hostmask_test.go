@@ -63,17 +63,15 @@ var boundaryByteDeltaTests = []struct {
 	incrcount *big.Int
 }{
 	{ 0x00, 0x00, big.NewInt(0), 0x00, big.NewInt(0), 0x00, big.NewInt(0) },
-
-	{ 0x00, 0x00, big.NewInt(1), 0x01, big.NewInt(0), 0x01, big.NewInt(0) }, // this is a nonsense entry for decrement
-
+	{ 0x00, 0x00, big.NewInt(1), 0xff, big.NewInt(1), 0x01, big.NewInt(0) },
 	{ 0x00, 0x01, big.NewInt(0), 0x01, big.NewInt(0), 0x01, big.NewInt(0) },
 	{ 0x00, 0x01, big.NewInt(1), 0x00, big.NewInt(0), 0x02, big.NewInt(0) },
 	{ 0x00, 0x09, big.NewInt(1024), 0x09, big.NewInt(4), 0x09,  big.NewInt(4) },
 	{ 0x80, 0x09, big.NewInt(1024), 0x09, big.NewInt(8), 0x09, big.NewInt(8) },
-	{ 0x40, 0x09, big.NewInt(1024), 0x49, big.NewInt(5), 0x49, big.NewInt( 5 ) },
-	{ 0x20, 0x09, big.NewInt(1024), 0x89, big.NewInt(4), 0x89, big.NewInt( 4 ) },
-	{ 0x10, 0x09, big.NewInt(1024), 0x49, big.NewInt(4), 0x49, big.NewInt( 4 ) },
-	{ 0x08, 0x09, big.NewInt(1024), 0x29, big.NewInt(4), 0x29, big.NewInt( 4 ) },
+	{ 0x40, 0x09, big.NewInt(1024), 0x89, big.NewInt(6), 0x49, big.NewInt( 5 ) },
+	{ 0x20, 0x09, big.NewInt(1024), 0x69, big.NewInt(5), 0x89, big.NewInt( 4 ) },
+	{ 0x10, 0x09, big.NewInt(1024), 0xb9, big.NewInt(5), 0x49, big.NewInt( 4 ) },
+	{ 0x08, 0x09, big.NewInt(1024), 0xe1, big.NewInt(5), 0x29, big.NewInt( 4 ) },
 }
 
 func Test_decrementBoundaryByte(t *testing.T) {
