@@ -38,11 +38,11 @@ var NewNetTests = []struct {
 }
 
 func TestNewNet(t *testing.T) {
-	for _, tt := range NewNetTests {
+	for i, tt := range NewNetTests {
 		xnet := NewNet(tt.ip, tt.masklen)
 		_, pnet, _ := net.ParseCIDR(tt.out)
 		if xnet.String() != pnet.String() {
-			t.Errorf("On NewNet(%s, %d) expected %s got %s", tt.ip.String(), tt.masklen, pnet.String(), xnet.String())
+			t.Errorf("[%d] NewNet(%s, %d) expected %s got %s", i, tt.ip.String(), tt.masklen, pnet.String(), xnet.String())
 		}
 	}
 }
@@ -155,18 +155,16 @@ var NewNetBetweenTests = []struct {
 }
 
 func TestNewNetBetween(t *testing.T) {
-	for _, tt := range NewNetBetweenTests {
+	for i, tt := range NewNetBetweenTests {
 		xnet, exact, err := NewNetBetween(tt.start, tt.end)
-		if tt.err != nil {
-			if tt.err != err {
-				t.Errorf("On NewNetBetween(%s, %s) expected error '%v', got '%v'", tt.start, tt.end, tt.err, err)
-			}
+		if e := compareErrors(err, tt.err); len(e) > 0 {
+			t.Errorf("[%d] NewNetBetween(%s, %s) expected error '%v', got '%v'", i, tt.start, tt.end, tt.err, err)
 		} else {
 			if xnet.String() != tt.xnet {
-				t.Errorf("On NewNetBetween(%s, %s) expected '%s', got '%s'", tt.start, tt.end, tt.xnet, xnet.String())
+				t.Errorf("[%d] NewNetBetween(%s, %s) expected '%s', got '%s'", i, tt.start, tt.end, tt.xnet, xnet.String())
 			}
 			if exact != tt.exact {
-				t.Errorf("On NewNetBetween(%s, %s) expected '%t', got '%t'", tt.start, tt.end, tt.exact, exact)
+				t.Errorf("[%d] NewNetBetween(%s, %s) expected '%t', got '%t'", i, tt.start, tt.end, tt.exact, exact)
 			}
 		}
 	}

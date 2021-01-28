@@ -5,6 +5,9 @@ import (
 	"strings"
 )
 
+// Net describes an iplib.Net object, the enumerated functions are those that
+// are required for comparison, sorting, generic initialization and for
+// ancillary functions such as those found in the iid and iana submodules
 type Net interface {
 	Contains(ip net.IP) bool
 	ContainsNet(network Net) bool
