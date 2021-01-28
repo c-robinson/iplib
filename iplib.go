@@ -534,6 +534,11 @@ func generateNetLimits(version int, filler byte) net.IP {
 	return b
 }
 
+func getCloneBigInt(z *big.Int) *big.Int {
+	nz := new(big.Int)
+	return nz.Set(z)
+}
+
 func getCloneIP(ip net.IP) net.IP {
 	var xip []byte
 	xip = make([]byte, len(ip))
