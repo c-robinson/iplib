@@ -246,58 +246,58 @@ var incr4Tests = []struct {
 }{
 	{
 		"192.168.1.0/23",
-		net.IP{192, 168, 1, 0},
-		net.IP{192, 168, 1, 1},
+		net.ParseIP("192.168.1.0"),
+		net.ParseIP("192.168.1.1"),
 		nil,
 	},
 	{
 		"192.168.1.0/24",
-		net.IP{192, 168, 1, 254},
-		net.IP{192, 168, 1, 255},
+		net.ParseIP("192.168.1.254"),
+		net.ParseIP("192.168.1.255"),
 		ErrBroadcastAddress,
 	},
 	{
 		"192.168.2.0/24",
-		net.IP{192, 168, 2, 1},
-		net.IP{192, 168, 2, 2},
+		net.ParseIP("192.168.2.1"),
+		net.ParseIP("192.168.2.2"),
 		nil,
 	},
 	{
 		"192.168.3.0/24",
-		net.IP{192, 168, 3, 0},
-		net.IP{192, 168, 3, 1},
+		net.ParseIP("192.168.3.0"),
+		net.ParseIP("192.168.3.1"),
 		nil,
 	},
 	{
 		"192.168.4.0/24",
-		net.IP{192, 168, 5, 1},
+		net.ParseIP("192.168.5.1"),
 		net.IP{},
 		ErrAddressOutOfRange,
 	},
 	{
 		"192.168.1.0/31",
-		net.IP{192, 168, 1, 0},
-		net.IP{192, 168, 1, 1},
+		net.ParseIP("192.168.1.0"),
+		net.ParseIP("192.168.1.1"),
 		ErrBroadcastAddress,
 	},
 	{
 		"192.168.1.0/32",
-		net.IP{192, 168, 1, 0},
+		net.ParseIP("192.168.1.0"),
 		net.IP{},
-		nil,
+		ErrAddressOutOfRange,
 	},
 }
 
 func TestNet4_NextIP(t *testing.T) {
-	for _, tt := range incr4Tests {
+	for i, tt := range incr4Tests {
 		_, ipn, _ := ParseCIDR(tt.inaddr)
 		ipn4 := ipn.(Net4)
 		addr, err := ipn4.NextIP(tt.ipaddr)
 		if !addr.Equal(tt.nextaddr) {
-			t.Errorf("For %s expected %v, got %v", tt.inaddr, tt.nextaddr, addr)
+			t.Errorf("[%d] %s expected %v, got %v", i, tt.inaddr, tt.nextaddr, addr)
 		}
 		if err != tt.nexterr {
-			t.Errorf("For %s expected \"%v\", got \"%v\"", tt.inaddr, tt.nexterr, err)
+			t.Errorf("[%d] %s expected \"%v\", got \"%v\"", i, tt.inaddr, tt.nexterr, err)
 		}
 	}
 }
