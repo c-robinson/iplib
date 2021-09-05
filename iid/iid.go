@@ -16,6 +16,7 @@ package iid
 import (
 	"bytes"
 	"crypto"
+	// imported for the MakeOpaqueAddr implemenation of GenerateRFC7217Addr
 	_ "crypto/sha256"
 	"encoding/binary"
 	"errors"
@@ -39,7 +40,7 @@ type Scope int
 
 const (
 	// ScopeNone is an undefined IID scope, the X bit will not be modified
-	ScopeNone   Scope = iota
+	ScopeNone Scope = iota
 
 	// ScopeInvert will cause the X bit to be inverted, setting 0 to 1 and 1
 	// to 0. This behavior is widely interpreted as the correct behavior
@@ -54,13 +55,14 @@ const (
 	ScopeLocal
 )
 
+// Errors that may be returned by functions in this package
 var (
 	ErrIIDAddressCollision = errors.New("proposed IID collides with IANA reserved IID list")
 )
 
 // Registry holds the aggregated network list from IANA's "Reserved IPv6
 // Interface Identifiers" as specified in RFC5453. In order to be compliant
-// with RFC 7217's algorithm for "Semantically Opaque Interface Identifiers"
+// with RFC7217's algorithm for "Semantically Opaque Interface Identifiers"
 // addresses should be checked against this registry to make sure there are
 // no conflicts
 var Registry []*Reservation
@@ -83,32 +85,32 @@ type Reservation struct {
 func init() {
 	Registry = []*Reservation{
 		{
-			[]byte{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
-			[]byte{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+			[]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+			[]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 			"Subnet-Router Anycast",
 			"RFC4291",
 		},
 		{
-			[]byte{ 0x02, 0x00, 0x5e, 0xff, 0xfe, 0x00, 0x00, 0x00 },
-			[]byte{ 0x02, 0x00, 0x5e, 0xff, 0xfe, 0x00, 0x52, 0x12 },
+			[]byte{0x02, 0x00, 0x5e, 0xff, 0xfe, 0x00, 0x00, 0x00},
+			[]byte{0x02, 0x00, 0x5e, 0xff, 0xfe, 0x00, 0x52, 0x12},
 			"Reserved IPv6 Interface Identifiers corresponding to the IANA Ethernet Block",
 			"RFC4291",
 		},
 		{
-			[]byte{ 0x02, 0x00, 0x5e, 0xff, 0xfe, 0x00, 0x52, 0x13 },
-			[]byte{ 0x02, 0x00, 0x5e, 0xff, 0xfe, 0x00, 0x52, 0x13 },
+			[]byte{0x02, 0x00, 0x5e, 0xff, 0xfe, 0x00, 0x52, 0x13},
+			[]byte{0x02, 0x00, 0x5e, 0xff, 0xfe, 0x00, 0x52, 0x13},
 			"Proxy Mobile IPv6",
 			"RFC6543",
 		},
 		{
-			[]byte{ 0x02, 0x00, 0x5e, 0xff, 0xfe, 0x00, 0x52, 0x14 },
-			[]byte{ 0x02, 0x00, 0x5e, 0xff, 0xfe, 0xff, 0xff, 0xff },
+			[]byte{0x02, 0x00, 0x5e, 0xff, 0xfe, 0x00, 0x52, 0x14},
+			[]byte{0x02, 0x00, 0x5e, 0xff, 0xfe, 0xff, 0xff, 0xff},
 			"Reserved IPv6 Interface Identifiers corresponding to the IANA Ethernet Block (2)",
 			"RFC4291",
 		},
 		{
-			[]byte{ 0xfd, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x80 },
-			[]byte{ 0xfd, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff },
+			[]byte{0xfd, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x80},
+			[]byte{0xfd, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
 			"Reserved Subnet Anycast Addresses",
 			"RFC2526",
 		},
@@ -116,9 +118,13 @@ func init() {
 }
 
 // GenerateRFC7217Addr generates a pseudo-random IID from supplied input
-// parameters, in compliance with RFC7217. The signature of this function
+// parameters in compliance with RFC7217. The signature of this function
 // deviates from the one specified in that RFC only insomuch as is necessary
-// to conform to the implementing language. The input fields are:
+// to conform to the implementing language. In most cases this function is
+// overkill and the function MakeOpaqueAddr, in this package, should be used
+// instead.
+//
+// The input fields are:
 //
 // ip: v6 net.IP, only the first 64bits will be used
 //
@@ -230,7 +236,6 @@ func MakeEUI64Addr(ip net.IP, hw net.HardwareAddr, scope Scope) net.IP {
 	return setScopeBit(eui64, scope)
 }
 
-
 // MakeOpaqueAddr offers one implementation of RFC7217's algorithm for
 // generating a "semantically opaque interface identifier". The caller must
 // supply a counter and secret and MAY supply an additional "netid".
@@ -244,13 +249,13 @@ func MakeOpaqueAddr(ip net.IP, hw net.HardwareAddr, counter int64, netid, secret
 func setScopeBit(ip net.IP, scope Scope) net.IP {
 	switch scope {
 	case ScopeGlobal:
-		ip[8] |= 1 << 1  // set 0 or 1 -> 1
+		ip[8] |= 1 << 1 // set 0 or 1 -> 1
 
 	case ScopeLocal:
 		ip[8] &^= 1 << 1 // set 0 or 1 -> 0
 
 	case ScopeInvert:
-		ip[8] ^= 1 << 1  // set 0 -> 1 or 1 -> 0
+		ip[8] ^= 1 << 1 // set 0 -> 1 or 1 -> 0
 	default:
 	}
 

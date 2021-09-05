@@ -38,7 +38,7 @@ func TestGetReservationsForIP(t *testing.T) {
 		ip := net.ParseIP(tt.address)
 		r := GetReservationsForIP(ip)
 		if len(r) != tt.resCount {
-			t.Errorf("'%s' expected %d reservations, got %d", tt.name, tt.resCount, len(r))
+			t.Errorf("'%s' want %d reservations, got %d", tt.name, tt.resCount, len(r))
 			for _, v := range r {
 				t.Logf("%s, %s", v.Title, v.Network.String())
 			}
@@ -146,6 +146,15 @@ var NetTests = []struct {
 		false,
 		true,
 	},
+	{
+		"KnowsAbout4in6",
+		1,
+		"::ffff:c0a9:0101/16",
+		[]string{"RFC4291"},
+		false,
+		false,
+		true,
+	},
 }
 
 func TestGetReservationsForNetwork(t *testing.T) {
@@ -153,7 +162,7 @@ func TestGetReservationsForNetwork(t *testing.T) {
 		_, n, _ := iplib.ParseCIDR(tt.network)
 		r := GetReservationsForNetwork(n)
 		if len(r) != tt.resCount {
-			t.Errorf("'%s' expected %d reservations, got %d", tt.name, tt.resCount, len(r))
+			t.Errorf("'%s' want %d reservations, got %d", tt.name, tt.resCount, len(r))
 			for _, v := range r {
 				t.Logf("%s, %s", v.Title, v.Network.String())
 			}
@@ -166,7 +175,7 @@ func TestGetRFCsForNetwork(t *testing.T) {
 		_, n, _ := iplib.ParseCIDR(tt.network)
 		rfclist := GetRFCsForNetwork(n)
 		if v := equalList(rfclist, tt.rfcList); v != true {
-			t.Errorf("'%s' (%s) expected %v, got %v", tt.name, tt.network, tt.rfcList, rfclist)
+			t.Errorf("'%s' (%s) want %v, got %v", tt.name, tt.network, tt.rfcList, rfclist)
 		}
 	}
 }
@@ -175,7 +184,7 @@ func TestIsForwardable(t *testing.T) {
 	for _, tt := range NetTests {
 		_, n, _ := iplib.ParseCIDR(tt.network)
 		if tt.valForwardable != IsForwardable(n) {
-			t.Errorf("'%s' (%s) expected %t, got %t", tt.name, tt.network, tt.valForwardable, IsForwardable(n))
+			t.Errorf("'%s' (%s) want %t, got %t", tt.name, tt.network, tt.valForwardable, IsForwardable(n))
 		}
 	}
 }
@@ -184,7 +193,7 @@ func TestIsGlobal(t *testing.T) {
 	for _, tt := range NetTests {
 		_, n, _ := iplib.ParseCIDR(tt.network)
 		if tt.valGlobal != IsGlobal(n) {
-			t.Errorf("'%s' (%s) expected %t, got %t", tt.name, tt.network, tt.valGlobal, IsGlobal(n))
+			t.Errorf("'%s' (%s) want %t, got %t", tt.name, tt.network, tt.valGlobal, IsGlobal(n))
 		}
 	}
 }
@@ -193,7 +202,7 @@ func TestIsReserved(t *testing.T) {
 	for _, tt := range NetTests {
 		_, n, _ := iplib.ParseCIDR(tt.network)
 		if tt.valReserved != IsReserved(n) {
-			t.Errorf("'%s' (%s) expected %t, got %t", tt.name, tt.network, tt.valReserved, IsReserved(n))
+			t.Errorf("'%s' (%s) want %t, got %t", tt.name, tt.network, tt.valReserved, IsReserved(n))
 		}
 	}
 }

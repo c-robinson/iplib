@@ -131,65 +131,73 @@ func BenchmarkIncrementIPBy_v6(b *testing.B) {
 
 func BenchmarkNet_Count4(b *testing.B) {
 	_, n, _ := ParseCIDR("192.168.0.0/24")
+	n4 := n.(Net4)
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		 _ = n.Count()
+		_ = n4.Count()
 	}
 }
 
 func BenchmarkNet_Count6(b *testing.B) {
 	_, n, _ := ParseCIDR("2001:db8::/98")
+	n6 := n.(Net6)
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		_ = n.Count()
+		_ = n6.Count()
 	}
 }
 
 func BenchmarkNet_Subnet_v4(b *testing.B) {
 	_, n, _ := ParseCIDR("192.168.0.0/24")
+	n4 := n.(Net4)
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = n.Subnet(25)
+		_, _ = n4.Subnet(25)
 	}
 }
 
 func BenchmarkNet_Subnet_v6(b *testing.B) {
 	_, n, _ := ParseCIDR("2001:db8::/98")
+	n4 := n.(Net4)
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = n.Subnet(99)
+		_, _ = n4.Subnet(99)
 	}
 }
 
 func BenchmarkNet_PreviousNet_v4(b *testing.B) {
 	_, n, _ := ParseCIDR("192.168.0.0/24")
+	n4 := n.(Net4)
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		_ = n.PreviousNet(24)
+		_ = n4.PreviousNet(24)
 	}
 }
 
 func BenchmarkNet_PreviousNet_v6(b *testing.B) {
 	_, n, _ := ParseCIDR("2001:db8::/98")
+	n6 := n.(Net6)
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		_ = n.PreviousNet(24)
+		_ = n6.PreviousNet(24)
 	}
 }
 
 func BenchmarkNet_NextNet_v4(b *testing.B) {
 	_, n, _ := ParseCIDR("192.168.0.0/24")
+	n4 := n.(Net4)
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		_ = n.NextNet(24)
+		_ = n4.NextNet(24)
 	}
 }
 
 func BenchmarkNet_NextNet_v6(b *testing.B) {
 	_, n, _ := ParseCIDR("2001:db8::/98")
+	n6 := n.(Net6)
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		_ = n.NextNet(24)
+		_ = n6.NextNet(24)
 	}
 }
 
@@ -201,14 +209,21 @@ func BenchmarkNewNetBetween_v4(b *testing.B) {
 	}
 }
 
-// Sorry for  abusing the benchmark suite here, i just think it's kind of neat
-// to see how quickly one can allocate the entire v4 space in a Go application
-func BenchmarkNextIP_EntireV4Space(b *testing.B) {
-	xip := net.IP{0, 0, 0, 0}
-	b.N = 4294967294
-	b.StartTimer()
-	for i := 0; i <= b.N; i++ {
-		xip = NextIP(xip)
+func BenchmarkNet6_nextIPWithinHostmask(b *testing.B) {
+	var xip = net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 46, 3, 112, 115, 52}
+	hm := NewHostMask(8)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		xip, _ = NextIP6WithinHostmask(xip, hm)
 	}
-	b.StopTimer()
+}
+
+func BenchmarkNet6_incrementIP6WithinHostmask(b *testing.B) {
+	var xip = net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 46, 3, 112, 115, 52}
+	count := big.NewInt(1)
+	hm := NewHostMask(8)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		xip, _ = IncrementIP6WithinHostmask(xip, hm, count)
+	}
 }
