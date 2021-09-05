@@ -17,6 +17,10 @@ return an integer value representing the address, in these cases the IPv4
 variants take an int32 as input while the IPv6 functions require a *big.Int
 in order to work with the 128bits of address.
 
+For managing the complexity of IPv6 address-spaces, this library adds a new
+mask, called a Hostmask, as an optional constraint on iplib.Net6 networks,
+please see the type-documentation for more information on using it.
+
 For functions where it is possible to exceed the address-space the rule is
 that underflows return the version-appropriate all-zeroes address while
 overflows return the all-ones.
