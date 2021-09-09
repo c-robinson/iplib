@@ -1,8 +1,8 @@
 # iana
 [![Documentation](https://godoc.org/github.com/c-robinson/iplib?status.svg)](http://godoc.org/github.com/c-robinson/iplib/iana)
-[![CircleCI](https://circleci.com/gh/c-robinson/iplib/tree/master.svg?style=svg)](https://circleci.com/gh/c-robinson/iplib/tree/master)
+[![CircleCI](https://circleci.com/gh/c-robinson/iplib/tree/main.svg?style=svg)](https://circleci.com/gh/c-robinson/iplib/tree/main)
 [![Go Report Card](https://goreportcard.com/badge/github.com/c-robinson/iplib)](https://goreportcard.com/report/github.com/c-robinson/iplib)
-[![Coverage Status](https://coveralls.io/repos/github/c-robinson/iplib/badge.svg?branch=master)](https://coveralls.io/github/c-robinson/iplib?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/c-robinson/iplib/badge.svg?branch=main)](https://coveralls.io/github/c-robinson/iplib?branch=main)
 
 This package imports the [Internet Assigned Number Authority (IANA)](https://www.iana.org/)
 Special IP Address Registry for [IPv4](https://www.iana.org/assignments/iana-ipv4-special-registry/iana-ipv4-special-registry.xhtml)

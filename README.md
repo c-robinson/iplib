@@ -1,8 +1,8 @@
 # IPLib 
 [![Documentation](https://godoc.org/github.com/c-robinson/iplib?status.svg)](http://godoc.org/github.com/c-robinson/iplib)
-[![CircleCI](https://circleci.com/gh/c-robinson/iplib/tree/master.svg?style=svg)](https://circleci.com/gh/c-robinson/iplib/tree/master)
+[![CircleCI](https://circleci.com/gh/c-robinson/iplib/tree/main.svg?style=svg)](https://circleci.com/gh/c-robinson/iplib/tree/main)
 [![Go Report Card](https://goreportcard.com/badge/github.com/c-robinson/iplib)](https://goreportcard.com/report/github.com/c-robinson/iplib)
-[![Coverage Status](https://coveralls.io/repos/github/c-robinson/iplib/badge.svg?branch=master)](https://coveralls.io/github/c-robinson/iplib?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/c-robinson/iplib/badge.svg?branch=main)](https://coveralls.io/github/c-robinson/iplib?branch=main)
 
 I really enjoy Python's [ipaddress](https://docs.python.org/3/library/ipaddress.html)
 library and Ruby's [ipaddr](https://ruby-doc.org/stdlib-2.5.1/libdoc/ipaddr/rdoc/IPAddr.html),
@@ -51,19 +51,19 @@ specific implementations providing features such as:
 The two address versions behave differently in both large and subtle ways,
 and the version-specific implementations seek to account for this. For example
 the Net4 implementation omits the network and broadcast addresses from
-consideration during enumeration, for example; while the Net6 implementation
-introduces the concept of a HostMask, which blocks usable addresses off from
-the right in the same way that a netmask constrains them from the left
+consideration during enumeration; while the Net6 implementation introduces the
+concept of a HostMask, which blocks usable addresses off from the right in the
+same way that a netmask constrains them from the left
 
 Additional version-specific considerations described in the [Net4](#using-iplibnet4)
 and [Net6](#using-iplibnet6) sections below.
 
 ## Sub-modules
 
-- [iana](https://github.com/c-robinson/iplib/tree/master/iana) - a module for referencing 
+- [iana](https://github.com/c-robinson/iplib/tree/main/iana) - a module for referencing 
   IP netblocks against the [Internet Assigned Numbers Authority's](https://www.iana.org/)
   Special IP Address Registry
-- [iid](https://github.com/c-robinson/iplib/tree/master/iid) - a module for
+- [iid](https://github.com/c-robinson/iplib/tree/main/iid) - a module for
   generating and validating IPv6 Interface Identifiers, including [RFC4291](https://tools.ietf.org/html/rfc4291)
   modified EUI64 and [RFC7217](https://tools.ietf.org/html/rfc7217)
   Semantically Opaque addresses
@@ -113,7 +113,7 @@ func main() {
 Addresses that require or return a count default to using `uint32`, which is
 sufficient for working with the entire IPv4 space. As a rule these functions
 are just lowest-common wrappers around IPv4- or IPv6-specific functions. The
-IPv6-specific variants use `big.Int` so they can access the entire v6 space:
+IPv6-specific variants use `big.Int` so they can access the entire v6 space.
 
 ## The iplib.Net interface
 
@@ -138,7 +138,7 @@ network's [wildcard address](https://en.wikipedia.org/wiki/Wildcard_mask).
 
 ```go
 n := NewNet4(net.ParseIP("192.168.0.0"), 16)
-fmt.Println(n.Count())            // 65534 (not: not 65536)
+fmt.Println(n.Count())            // 65534 (note: not 65536)
 fmt.Println(n.Enumerate(2, 1024)) // [192.168.4.1 192.168.4.2]
 fmt.Println(n.Network())          // 192.168.0.0
 fmt.Println(n.FirstAddress())     // 192.168.0.1
