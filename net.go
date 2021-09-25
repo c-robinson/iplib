@@ -44,26 +44,7 @@ func NewNetBetween(a, b net.IP) (Net, bool, error) {
 		return nil, false, ErrNoValidRange
 	}
 
-	maskMax := 128
-	if EffectiveVersion(a) == 4 {
-		maskMax = 32
-	}
-
-	ipa := NextIP(a)
-	ipb := PreviousIP(b)
-	for i := 1; i <= maskMax; i++ {
-		xnet := NewNet(ipa, i)
-
-		va := CompareIPs(xnet.FirstAddress(), ipa)
-		vb := CompareIPs(xnet.LastAddress(), ipb)
-		if va >= 0 && vb < 0 {
-			return xnet, false, nil
-		}
-		if va == 0 && vb == 0 {
-			return xnet, true, nil
-		}
-	}
-	return nil, false, ErrNoValidRange
+	return fitNetworkBetween(NextIP(a), PreviousIP(b), 1)
 }
 
 // ByNet implements sort.Interface for iplib.Net based on the
@@ -117,4 +98,18 @@ func ParseCIDR(s string) (net.IP, Net, error) {
 	}
 
 	return ip, NewNet6(ip, masklen, 0), err
+}
+
+func fitNetworkBetween(a, b net.IP, mask int) (Net, bool, error) {
+	xnet := NewNet(a, mask)
+
+	va := CompareIPs(xnet.FirstAddress(), a)
+	vb := CompareIPs(xnet.LastAddress(), b)
+	if va >= 0 && vb < 0 {
+		return xnet, false, nil
+	}
+	if va == 0 && vb == 0 {
+		return xnet, true, nil
+	}
+	return fitNetworkBetween(a, b, mask + 1)
 }

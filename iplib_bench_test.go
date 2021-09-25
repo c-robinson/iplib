@@ -209,6 +209,14 @@ func BenchmarkNewNetBetween_v4(b *testing.B) {
 	}
 }
 
+func BenchmarkNewNetBetween_v6(b *testing.B) {
+	ipa, _, _ := net.ParseCIDR("::")
+	ipb, _, _ := net.ParseCIDR("ffff::")
+	for i := 0; i < b.N; i++ {
+		_, _, _ = NewNetBetween(ipa, ipb)
+	}
+}
+
 func BenchmarkNet6_nextIPWithinHostmask(b *testing.B) {
 	var xip = net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 46, 3, 112, 115, 52}
 	hm := NewHostMask(8)
