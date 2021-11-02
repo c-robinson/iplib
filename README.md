@@ -137,10 +137,10 @@ Additionally `Net4` contains a `Wildcard()` method which will return the
 network's [wildcard address](https://en.wikipedia.org/wiki/Wildcard_mask).
 
 ```go
-n := NewNet4(net.ParseIP("192.168.0.0"), 16)
+n := iplib.NewNet4(net.ParseIP("192.168.0.0"), 16)
 fmt.Println(n.Count())            // 65534 (note: not 65536)
 fmt.Println(n.Enumerate(2, 1024)) // [192.168.4.1 192.168.4.2]
-fmt.Println(n.Network())          // 192.168.0.0
+fmt.Println(n.IP())               // 192.168.0.0
 fmt.Println(n.FirstAddress())     // 192.168.0.1
 fmt.Println(n.LastAddress())      // 192.168.255.254
 fmt.Println(n.BroadcastAddress()) // 192.168.255.255
