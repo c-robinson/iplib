@@ -47,7 +47,7 @@ import (
 
 const (
 	// MaxIPv4 is the max size of a uint32, also the IPv4 address space
-	MaxIPv4 = 1<<32 - 1
+	MaxIPv4 uint32 = 1<<32 - 1
 
 	// IP4Version is the label returned by IPv4 addresses
 	IP4Version = 4
