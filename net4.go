@@ -209,7 +209,12 @@ func (n Net4) NextIP(ip net.IP) (net.IP, error) {
 // NextNet takes a CIDR mask-size as an argument and attempts to create a new
 // Net object just after the current Net, at the requested mask length
 func (n Net4) NextNet(masklen int) Net4 {
-	return NewNet4(NextIP(n.BroadcastAddress()), masklen)
+	l, _ := n.Mask().Size()
+	nextIP := NextIP(n.BroadcastAddress())
+	if masklen < l {
+		nextIP = IncrementIP4By(nextIP, uint32(math.Pow(2, 32-float64(masklen)))-2)
+	}
+	return NewNet4(nextIP, masklen)
 }
 
 // PreviousIP takes a net.IP as an argument and attempts to decrement it by

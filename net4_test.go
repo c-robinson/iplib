@@ -389,9 +389,11 @@ var incr4SubnetTests = []struct {
 	netmask  int
 	next     Net4
 }{
+	{Net4FromStr("192.168.0.0/24"), 21, Net4FromStr("192.168.8.0/21")},
+	{Net4FromStr("192.168.0.0/24"), 22, Net4FromStr("192.168.4.0/22")},
+	{Net4FromStr("192.168.0.0/24"), 23, Net4FromStr("192.168.2.0/23")},
 	{Net4FromStr("192.168.0.0/24"), 24, Net4FromStr("192.168.1.0/24")},
 	{Net4FromStr("192.168.0.0/24"), 25, Net4FromStr("192.168.1.0/25")},
-	{Net4FromStr("192.168.0.0/24"), 23, Net4FromStr("192.168.0.0/23")},
 	{Net4FromStr("255.255.255.0/24"), 24, Net4FromStr("255.255.255.0/24")},
 }
 
