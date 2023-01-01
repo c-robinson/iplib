@@ -23,6 +23,7 @@ It includes:
 Some simple tools for performing common tasks against IP objects:
 
 - compare two addresses
+- make a copy of a net.IP address
 - get the delta between two addresses
 - sort
 - decrement or increment addresses

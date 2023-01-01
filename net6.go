@@ -153,7 +153,7 @@ func (n Net6) Enumerate(size, offset int) []net.IP {
 	wg := sync.WaitGroup{}
 	for pos < count {
 		incr := limit
-		if limit > count - pos {
+		if limit > count-pos {
 			incr = count - pos
 		}
 		wg.Add(1)
@@ -173,7 +173,7 @@ func (n Net6) Enumerate(size, offset int) []net.IP {
 
 // FirstAddress returns the first usable address for the represented network
 func (n Net6) FirstAddress() net.IP {
-	return getCloneIP(n.IP())
+	return CopyIP(n.IP())
 }
 
 // LastAddress returns the last usable address for the represented network

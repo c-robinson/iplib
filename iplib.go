@@ -138,6 +138,15 @@ func CompareNets(a, b Net) int {
 	return 1
 }
 
+// CopyIP creates a new net.IP object containing the same data as the supplied
+// net.IP (e.g. creates a new array and duplicates the contents)
+func CopyIP(ip net.IP) net.IP {
+	var xip []byte
+	xip = make([]byte, len(ip))
+	copy(xip, ip)
+	return xip
+}
+
 // DecrementIPBy returns a net.IP that is lower than the supplied net.IP by
 // the supplied integer value. If you underflow the IP space it will return
 // the zero address.
@@ -445,9 +454,9 @@ func IsAllZeroes(ip net.IP) bool {
 func NextIP(ip net.IP) net.IP {
 	var xip []byte
 	if EffectiveVersion(ip) == IP4Version {
-		xip = getCloneIP(ForceIP4(ip))
+		xip = CopyIP(ForceIP4(ip))
 	} else {
-		xip = getCloneIP(ip)
+		xip = CopyIP(ip)
 	}
 
 	for i := len(xip) - 1; i >= 0; i-- {
@@ -466,9 +475,9 @@ func NextIP(ip net.IP) net.IP {
 func PreviousIP(ip net.IP) net.IP {
 	var xip []byte
 	if EffectiveVersion(ip) == IP4Version {
-		xip = getCloneIP(ForceIP4(ip))
+		xip = CopyIP(ForceIP4(ip))
 	} else {
-		xip = getCloneIP(ip)
+		xip = CopyIP(ip)
 	}
 
 	for i := len(xip) - 1; i >= 0; i-- {
@@ -529,11 +538,4 @@ func generateNetLimits(version int, filler byte) net.IP {
 func getCloneBigInt(z *big.Int) *big.Int {
 	nz := new(big.Int)
 	return nz.Set(z)
-}
-
-func getCloneIP(ip net.IP) net.IP {
-	var xip []byte
-	xip = make([]byte, len(ip))
-	copy(xip, ip)
-	return xip
 }

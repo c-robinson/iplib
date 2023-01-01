@@ -106,7 +106,7 @@ func (n Net4) Enumerate(size, offset int) []net.IP {
 
 	// Handle edge-case mask sizes
 	if count == 1 { // Count() returns 1 if host-bits == 0
-		return []net.IP{getCloneIP(n.IPNet.IP)}
+		return []net.IP{CopyIP(n.IPNet.IP)}
 	}
 
 	addrs := make([]net.IP, size)

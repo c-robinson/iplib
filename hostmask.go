@@ -18,25 +18,25 @@ import (
 // 2001:db8:1234:5678::1. Here is a Net6 object eing initialized without a
 // hostmask:
 //
-//   n := NewNet6(2001:db8::, 56, 0)
-//   Address            2001:db8::
-//   Netmask            ffff:ffff:ffff:ff00:0000:0000:0000:0000
-//   Hostmask           0000:0000:0000:0000:0000:0000:0000:0000
-//   First              2001:0db8:0000:0000:0000:0000:0000:0000
-//   Last               2001:0db8:0000:00ff:ffff:ffff:ffff:ffff
-//   Count              4722366482869645213696
+//	n := NewNet6(2001:db8::, 56, 0)
+//	Address            2001:db8::
+//	Netmask            ffff:ffff:ffff:ff00:0000:0000:0000:0000
+//	Hostmask           0000:0000:0000:0000:0000:0000:0000:0000
+//	First              2001:0db8:0000:0000:0000:0000:0000:0000
+//	Last               2001:0db8:0000:00ff:ffff:ffff:ffff:ffff
+//	Count              4722366482869645213696
 //
 // This creates a block with 4.7 sextillion usable addresses. Below is he same
 // block with a hostmask of /60. The mask is applied from the rightmost byte,
 // leaving 12 unmasked bits for a total of 4096 allocatable addresses:
 //
-//   n:= NewNet6(2001:db8::, 56, 60)
-//   Address            2001:db8::
-//   Netmask            ffff:ffff:ffff:ff00:0000:0000:0000:0000
-//   Hostmask           0000:0000:0000:0000:0fff:ffff:ffff:ffff
-//   First              2001:0db8:0000:0000:0000:0000:0000:0000
-//   Last               2001:0db8:0000:00ff:f000:0000:0000:0000
-//   Count              4096
+//	n:= NewNet6(2001:db8::, 56, 60)
+//	Address            2001:db8::
+//	Netmask            ffff:ffff:ffff:ff00:0000:0000:0000:0000
+//	Hostmask           0000:0000:0000:0000:0fff:ffff:ffff:ffff
+//	First              2001:0db8:0000:0000:0000:0000:0000:0000
+//	Last               2001:0db8:0000:00ff:f000:0000:0000:0000
+//	Count              4096
 //
 // In the first example the second IP address of the netblock is 2001:db8::1,
 // in the second example it is 2001:db8:0:1::
@@ -45,15 +45,15 @@ import (
 // within those bytes are still blocked out left-to-right, so that address
 // incrementing/decrementing makes sense to the end user, as shown here:
 //
-//   BINARY      Base16  Base10  Example Max16  Max10
-//   0000 0000     0x00       0      /56  0xFF    255
-//   1000 0000     0x80     128      /57  0x7F    127
-//   1100 0000     0xC0     192      /58  0x3F     63
-//   1110 0000     0xE0     224      /59  0x1F     31
-//   1111 0000     0xF0     240      /60  0x0F     15
-//   1111 1000     0xF8     248      /61  0x07      7
-//   1111 1100     0xFC     252      /62  0x03      3
-//   1111 1110     0xFE     254      /63  0x01      1
+//	BINARY      Base16  Base10  Example Max16  Max10
+//	0000 0000     0x00       0      /56  0xFF    255
+//	1000 0000     0x80     128      /57  0x7F    127
+//	1100 0000     0xC0     192      /58  0x3F     63
+//	1110 0000     0xE0     224      /59  0x1F     31
+//	1111 0000     0xF0     240      /60  0x0F     15
+//	1111 1000     0xF8     248      /61  0x07      7
+//	1111 1100     0xFC     252      /62  0x03      3
+//	1111 1110     0xFE     254      /63  0x01      1
 //
 // A hostmask of /1 will block out the left-most bit of the 16th byte
 // while a /8 will block the entire 16th byte.
@@ -209,7 +209,7 @@ func IncrementIP6WithinHostmask(ip net.IP, hm HostMask, count *big.Int) (net.IP,
 // inside the hostmask are set, an empty net.IP{} and an ErrAddressOutOfRange
 // will be returned
 func NextIP6WithinHostmask(ip net.IP, hm HostMask) (net.IP, error) {
-	xip := getCloneIP(ip)
+	xip := CopyIP(ip)
 
 	for i := len(xip) - 1; i >= 0; i-- {
 		if hm[i] == 0xff {
@@ -237,7 +237,7 @@ func NextIP6WithinHostmask(ip net.IP, hm HostMask) (net.IP, error) {
 // If bits inside the hostmask are set, an empty net.IP{} and an
 // ErrAddressOutOfRange will be returned
 func PreviousIP6WithinHostmask(ip net.IP, hm HostMask) (net.IP, error) {
-	xip := getCloneIP(ip)
+	xip := CopyIP(ip)
 	bb, bbpos := hm.BoundaryByte()
 	bbmax := 0xff - bb
 
