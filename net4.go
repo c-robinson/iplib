@@ -1,7 +1,9 @@
 package iplib
 
 import (
+	"crypto/rand"
 	"math"
+	"math/big"
 	"net"
 	"sync"
 )
@@ -248,6 +250,13 @@ func (n Net4) PreviousIP(ip net.IP) (net.IP, error) {
 // In the above case 192.168.4.0/22 is part of 192.168.0.0/21
 func (n Net4) PreviousNet(masklen int) Net4 {
 	return NewNet4(PreviousIP(n.IP()), masklen)
+}
+
+// RandomIP returns a random address from this Net4. It uses crypto/rand and
+// *big.Int so is not the most performant implementation possible
+func (n Net4) RandomIP() net.IP {
+	z, _ := rand.Int(rand.Reader, big.NewInt(int64(n.Count())))
+	return IncrementIP4By(n.IP(), uint32(z.Uint64()))
 }
 
 // String returns the CIDR notation of the enclosed network e.g. 192.168.0.1/24

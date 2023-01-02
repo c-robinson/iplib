@@ -1,6 +1,7 @@
 package iplib
 
 import (
+	"crypto/rand"
 	"math"
 	"math/big"
 	"net"
@@ -147,7 +148,7 @@ func (n Net6) Enumerate(size, offset int) []net.IP {
 	// workload in this way simply ensures that we [a] can dynamically expand
 	// our worker-pool based on request size; and [b] don't have to worry
 	// about exhausting some upper bound of goroutines -- enumerate requests
-	// are limited to MaxInt32, so we won't generate more than 32768
+	// are limited to MaxUint32, so we won't generate more than 65536
 	limit := uint32(65535)
 	pos := uint32(0)
 	wg := sync.WaitGroup{}
@@ -246,6 +247,13 @@ func (n Net6) PreviousNet(masklen int) Net6 {
 	nn := NewNet6(n.IP(), masklen, hmlen)
 	xip, _ := PreviousIP6WithinHostmask(nn.IP(), n.Hostmask)
 	return NewNet6(xip, masklen, hmlen)
+}
+
+// RandomIP returns a random address from this Net6. It uses crypto/rand and
+// so is not the most performant implementation possible
+func (n Net6) RandomIP() net.IP {
+	z, _ := rand.Int(rand.Reader, n.Count())
+	return IncrementIP6By(n.FirstAddress(), z)
 }
 
 // String returns the CIDR notation of the enclosed network e.g. 2001:db8::/16
