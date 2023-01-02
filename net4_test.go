@@ -628,9 +628,17 @@ func TestNet4_ContainsNet(t *testing.T) {
 	}
 }
 
+func TestNet4_RandomIP(t *testing.T) {
+	for i, tt := range containsNet4Tests {
+		rip := tt.ipn1.RandomIP()
+		if !tt.ipn1.Contains(rip) {
+			t.Errorf("[%d] address %s not in %s", i, rip, tt.ipn1)
+		}
+	}
+}
+
 func TestNet4_Is4in6(t *testing.T) {
 	nf := Net4FromStr("192.168.0.0./16")
-	//nf := NewNet4(ForceIP4(net.ParseIP("192.168.0.0")), 16)
 	if nf.Is4in6() != false {
 		t.Errorf("should be false for '192.168.0.0/16'")
 	}

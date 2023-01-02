@@ -752,6 +752,16 @@ func TestNet6_ContainsNet(t *testing.T) {
 	}
 }
 
+func TestNet6_RandomIP(t *testing.T) {
+	for i, tt := range containsNet6Tests {
+		_, ipn, _ := ParseCIDR(tt.netblock1)
+		rip := ipn.(Net6).RandomIP()
+		if !ipn.Contains(rip) {
+			t.Errorf("[%d] address %s not in %s", i, rip, ipn)
+		}
+	}
+}
+
 var controlsTests = []struct {
 	ipn   Net6
 	addrs map[string]bool

@@ -3,9 +3,21 @@ package iplib
 import (
 	"math/big"
 	"net"
+	"reflect"
 	"sort"
 	"testing"
 )
+
+func TestCopyIP(t *testing.T) {
+	ipa := net.ParseIP("192.168.23.5")
+	ipb := CopyIP(ipa)
+	if reflect.ValueOf(ipa).Pointer() == reflect.ValueOf(ipb).Pointer() {
+		t.Errorf("CopyIP() failed to copy (copied IP shares pointer with original)!")
+	}
+	if CompareIPs(ipa, ipb) != 0 {
+		t.Errorf("CopyIP() failed to copy (value of copied IP does not match original)!")
+	}
+}
 
 var IPTests = []struct {
 	ipaddr net.IP
