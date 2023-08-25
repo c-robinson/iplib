@@ -305,6 +305,9 @@ func IPToARPA(ip net.IP) string {
 // the IPv4 ARPA domain "in-addr.arpa"
 func IP4ToARPA(ip net.IP) string {
 	ip = ForceIP4(ip)
+	if ip == nil {
+		return ""
+	}
 	return fmt.Sprintf("%d.%d.%d.%d.in-addr.arpa", ip[3], ip[2], ip[1], ip[0])
 }
 
