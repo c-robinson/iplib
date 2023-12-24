@@ -463,10 +463,7 @@ func IsAllZeroes(ip net.IP) bool {
 	return true
 }
 
-// NextIP returns a net.IP incremented by one from the input address. This
-// function is roughly as fast for v4 as IncrementIP4By(1) but is consistently
-// 4x faster on v6 than IncrementIP6By(1). The bundled tests provide
-// benchmarks doing so, as well as iterating over the entire v4 address space.
+// NextIP returns a net.IP incremented by one from the input address
 func NextIP(ip net.IP) net.IP {
 	var xip []byte
 	if EffectiveVersion(ip) == IP4Version {
@@ -484,10 +481,7 @@ func NextIP(ip net.IP) net.IP {
 	return ip // if we're already at the end of range, don't wrap
 }
 
-// PreviousIP returns a net.IP decremented by one from the input address. This
-// function is roughly as fast for v4 as DecrementIP4By(1) but is consistently
-// 4x faster on v6 than DecrementIP6By(1). The bundled tests provide
-// benchmarks doing so, as well as iterating over the entire v4 address space.
+// PreviousIP returns a net.IP decremented by one from the input address
 func PreviousIP(ip net.IP) net.IP {
 	var xip []byte
 	if EffectiveVersion(ip) == IP4Version {
