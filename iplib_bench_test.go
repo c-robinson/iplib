@@ -165,9 +165,12 @@ func BenchmarkNet_Subnet_v6(b *testing.B) {
 		_, _ = n6.Subnet(99, 0)
 	}
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
 >>>>>>> 8809338 (Change from *big.Int to uint128.Uint128)
+=======
+>>>>>>> 64c8610 (add subnet_v6 benchmark)
 }
 
 func BenchmarkNet_PreviousNet_v4(b *testing.B) {
