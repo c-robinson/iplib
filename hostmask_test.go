@@ -2,9 +2,10 @@ package iplib
 
 import (
 	"bytes"
-	"math/big"
 	"net"
 	"testing"
+
+	"lukechampine.com/uint128"
 )
 
 var hostMaskTests = []struct {
@@ -56,59 +57,57 @@ func TestNewHostMask(t *testing.T) {
 var boundaryByteDeltaTests = []struct {
 	bb        byte
 	bv        byte
-	count     *big.Int
+	count     uint128.Uint128
 	decrval   byte
-	decrcount *big.Int
+	decrcount uint128.Uint128
 	incrval   byte
-	incrcount *big.Int
+	incrcount uint128.Uint128
 }{
-	{0x00, 0x00, big.NewInt(0), 0x00, big.NewInt(0), 0x00, big.NewInt(0)},
-	{0x00, 0x00, big.NewInt(1), 0xff, big.NewInt(1), 0x01, big.NewInt(0)},
-	{0x00, 0x01, big.NewInt(0), 0x01, big.NewInt(0), 0x01, big.NewInt(0)},
-	{0x00, 0x01, big.NewInt(1), 0x00, big.NewInt(0), 0x02, big.NewInt(0)},
-	{0x00, 0x09, big.NewInt(1024), 0x09, big.NewInt(4), 0x09, big.NewInt(4)},
-	{0x80, 0x09, big.NewInt(1024), 0x09, big.NewInt(8), 0x09, big.NewInt(8)},
-	{0x40, 0x09, big.NewInt(1024), 0x89, big.NewInt(6), 0x49, big.NewInt(5)},
-	{0x20, 0x09, big.NewInt(1024), 0x69, big.NewInt(5), 0x89, big.NewInt(4)},
-	{0x10, 0x09, big.NewInt(1024), 0xb9, big.NewInt(5), 0x49, big.NewInt(4)},
-	{0x08, 0x09, big.NewInt(1024), 0xe1, big.NewInt(5), 0x29, big.NewInt(4)},
+	{0x00, 0x00, uint128.From64(0), 0x00, uint128.From64(0), 0x00, uint128.From64(0)},
+	{0x00, 0x00, uint128.From64(1), 0xff, uint128.From64(1), 0x01, uint128.From64(0)},
+	{0x00, 0x01, uint128.From64(0), 0x01, uint128.From64(0), 0x01, uint128.From64(0)},
+	{0x00, 0x01, uint128.From64(1), 0x00, uint128.From64(0), 0x02, uint128.From64(0)},
+	{0x00, 0x09, uint128.From64(1024), 0x09, uint128.From64(4), 0x09, uint128.From64(4)},
+	{0x80, 0x09, uint128.From64(1024), 0x09, uint128.From64(8), 0x09, uint128.From64(8)},
+	{0x40, 0x09, uint128.From64(1024), 0x89, uint128.From64(6), 0x49, uint128.From64(5)},
+	{0x20, 0x09, uint128.From64(1024), 0x69, uint128.From64(5), 0x89, uint128.From64(4)},
+	{0x10, 0x09, uint128.From64(1024), 0xb9, uint128.From64(5), 0x49, uint128.From64(4)},
+	{0x08, 0x09, uint128.From64(1024), 0xe1, uint128.From64(5), 0x29, uint128.From64(4)},
 }
 
 func Test_decrementBoundaryByte(t *testing.T) {
 	for i, tt := range boundaryByteDeltaTests {
-		xcount := getCloneBigInt(tt.count)
-		decrval := decrementBoundaryByte(tt.bb, tt.bv, xcount)
+		decrcount, decrval := decrementBoundaryByte(tt.bb, tt.bv, tt.count)
 		if decrval != tt.decrval {
 			t.Errorf("[%d] got wrong output byte: want 0x%02x, got 0x%02x", i, tt.decrval, decrval)
 		}
-		if v := xcount.Cmp(tt.decrcount); v != 0 {
-			t.Errorf("[%d] got wrong output count: want %d, got %d", i, tt.decrcount, xcount)
+		if v := decrcount.Cmp(tt.decrcount); v != 0 {
+			t.Errorf("[%d] got wrong output count: want %d, got %d", i, tt.decrcount, decrcount)
 		}
 	}
 }
 
 func Test_incrementBoundaryByte(t *testing.T) {
 	for i, tt := range boundaryByteDeltaTests {
-		xcount := getCloneBigInt(tt.count)
-		incrval := incrementBoundaryByte(tt.bb, tt.bv, xcount)
+		count, incrval := incrementBoundaryByte(tt.bb, tt.bv, tt.count)
 		if incrval != tt.incrval {
 			t.Errorf("[%d] got wrong output byte: want 0x%02x, got 0x%02x", i, tt.incrval, incrval)
 		}
-		if v := xcount.Cmp(tt.incrcount); v != 0 {
-			t.Errorf("[%d] got wrong output count: want %d, got %d", i, tt.incrcount, xcount)
+		if v := count.Cmp(tt.incrcount); v != 0 {
+			t.Errorf("[%d] got wrong output count: want %d, got %d", i, tt.incrcount, count)
 		}
 	}
 }
 
 var unmaskedBytesDeltaTest = []struct {
 	inval   []byte
-	incount *big.Int
+	incount uint128.Uint128
 	decrval []byte
 	incrval []byte
 }{
-	{[]byte{0, 255}, big.NewInt(255), []byte{0, 0}, []byte{1, 254}},
-	{[]byte{254, 1}, big.NewInt(1), []byte{254, 0}, []byte{254, 2}},
-	{[]byte{0, 255}, big.NewInt(1), []byte{0, 254}, []byte{1, 0}},
+	{[]byte{0, 255}, uint128.From64(255), []byte{0, 0}, []byte{1, 254}},
+	{[]byte{254, 1}, uint128.From64(1), []byte{254, 0}, []byte{254, 2}},
+	{[]byte{0, 255}, uint128.From64(1), []byte{0, 254}, []byte{1, 0}},
 }
 
 func Test_decrementUnmaskedBytes(t *testing.T) {
@@ -200,7 +199,7 @@ var IPHostmaskDeltaTests = []struct {
 
 func TestDecrementIP6WithinHostmask(t *testing.T) {
 	for i, tt := range IPHostmaskDeltaTests {
-		count := big.NewInt(1000)
+		count := uint128.From64(1000)
 		hm := NewHostMask(tt.hostmask)
 		decr, err := DecrementIP6WithinHostmask(tt.ipaddr, hm, count)
 		if e := compareErrors(err, tt.decrErr); len(e) > 0 {
@@ -216,7 +215,7 @@ func TestDecrementIP6WithinHostmask(t *testing.T) {
 
 func TestIncrementIP6WithinHostmask(t *testing.T) {
 	for i, tt := range IPHostmaskDeltaTests {
-		count := big.NewInt(1000)
+		count := uint128.From64(1000)
 		hm := NewHostMask(tt.hostmask)
 		incr, err := IncrementIP6WithinHostmask(tt.ipaddr, hm, count)
 		if e := compareErrors(err, tt.incrErr); len(e) > 0 {

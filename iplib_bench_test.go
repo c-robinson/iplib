@@ -1,9 +1,10 @@
 package iplib
 
 import (
-	"math/big"
 	"net"
 	"testing"
+
+	"lukechampine.com/uint128"
 )
 
 func BenchmarkParseCIDR4(b *testing.B) {
@@ -71,7 +72,7 @@ func BenchmarkPreviousIP6(b *testing.B) {
 
 func BenchmarkDecrementIP6By(b *testing.B) {
 	var xip = net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 46, 3, 112, 115, 52}
-	count := big.NewInt(1)
+	count := uint128.From64(1)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		xip = DecrementIP6By(xip, count)
@@ -115,7 +116,7 @@ func BenchmarkNextIP6(b *testing.B) {
 
 func BenchmarkIncrementIP6By(b *testing.B) {
 	var xip = net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 46, 3, 112, 115, 52}
-	count := big.NewInt(1)
+	count := uint128.From64(1)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		xip = IncrementIP6By(xip, count)
@@ -153,15 +154,6 @@ func BenchmarkNet_Subnet_v4(b *testing.B) {
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		_, _ = n4.Subnet(25)
-	}
-}
-
-func BenchmarkNet_Subnet_v6(b *testing.B) {
-	_, n, _ := ParseCIDR("2001:db8::/98")
-	n4 := n.(Net4)
-	b.StartTimer()
-	for i := 0; i < b.N; i++ {
-		_, _ = n4.Subnet(99)
 	}
 }
 
@@ -217,7 +209,26 @@ func BenchmarkNewNetBetween_v6(b *testing.B) {
 	}
 }
 
-func BenchmarkNet6_nextIPWithinHostmask(b *testing.B) {
+func BenchmarkNet6_PreviousIPWithinHostmask(b *testing.B) {
+	var xip = net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 46, 3, 112, 115, 52}
+	hm := NewHostMask(8)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		xip, _ = PreviousIP6WithinHostmask(xip, hm)
+	}
+}
+
+func BenchmarkNet6_DecrementIP6WithinHostmask(b *testing.B) {
+	var xip = net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 46, 3, 112, 115, 52}
+	count := uint128.From64(1)
+	hm := NewHostMask(8)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		xip, _ = DecrementIP6WithinHostmask(xip, hm, count)
+	}
+}
+
+func BenchmarkNet6_NextIPWithinHostmask(b *testing.B) {
 	var xip = net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 46, 3, 112, 115, 52}
 	hm := NewHostMask(8)
 	b.ResetTimer()
@@ -226,9 +237,9 @@ func BenchmarkNet6_nextIPWithinHostmask(b *testing.B) {
 	}
 }
 
-func BenchmarkNet6_incrementIP6WithinHostmask(b *testing.B) {
+func BenchmarkNet6_IncrementIP6WithinHostmask(b *testing.B) {
 	var xip = net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 46, 3, 112, 115, 52}
-	count := big.NewInt(1)
+	count := uint128.From64(1)
 	hm := NewHostMask(8)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

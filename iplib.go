@@ -14,7 +14,7 @@ For most features iplib exposes a v4 and a v6 variant to handle each network
 properly, but in all cases there is a generic function that handles any IP and
 routes between them. One caveat to this is those functions that require or
 return an integer value representing the address, in these cases the IPv4
-variants take an int32 as input while the IPv6 functions require a *big.Int
+variants take int32 as input while the IPv6 functions require uint128.Uint128
 in order to work with the 128bits of address.
 
 For managing the complexity of IPv6 address-spaces, this library adds a new
@@ -43,6 +43,8 @@ import (
 	"math/big"
 	"net"
 	"strings"
+
+	"lukechampine.com/uint128"
 )
 
 const (
@@ -154,7 +156,7 @@ func DecrementIPBy(ip net.IP, count uint32) net.IP {
 	if EffectiveVersion(ip) == IP4Version {
 		return DecrementIP4By(ip, count)
 	}
-	z := big.NewInt(int64(count))
+	z := uint128.From64(uint64(count))
 	return DecrementIP6By(ip, z)
 }
 
@@ -175,10 +177,13 @@ func DecrementIP4By(ip net.IP, count uint32) net.IP {
 // DecrementIP6By returns a net.IP that is lower than the supplied net.IP by
 // the supplied integer value. If you underflow the IP space it will return
 // ::
-func DecrementIP6By(ip net.IP, count *big.Int) net.IP {
-	z := IPToBigint(ip)
-	z.Sub(z, count)
-	return BigintToIP6(z)
+func DecrementIP6By(ip net.IP, count uint128.Uint128) net.IP {
+	z := IP6ToUint128(ip)
+	nz := z.SubWrap(count)
+	if nz.Cmp(z) > 0 {
+		return generateNetLimits(6, 0)
+	}
+	return Uint128ToIP6(nz)
 }
 
 // DeltaIP takes two net.IP's as input and returns the difference between them
@@ -187,12 +192,13 @@ func DeltaIP(a, b net.IP) uint32 {
 	if EffectiveVersion(a) == IP4Version && EffectiveVersion(b) == IP4Version {
 		return DeltaIP4(a, b)
 	}
-	m := big.NewInt(int64(MaxIPv4))
+	m := uint128.From64(uint64(MaxIPv4))
 	z := DeltaIP6(a, b)
 	if v := z.Cmp(m); v > 0 {
 		return MaxIPv4
 	}
-	return uint32(z.Uint64())
+
+	return uint32(z.Lo)
 }
 
 // DeltaIP4 takes two net.IP's as input and returns a total of the number of
@@ -208,14 +214,15 @@ func DeltaIP4(a, b net.IP) uint32 {
 }
 
 // DeltaIP6 takes two net.IP's as input and returns a total of the number of
-// addressed between them as a big.Int. It will technically work on v4 as well
-// but is considerably slower than DeltaIP4.
-func DeltaIP6(a, b net.IP) *big.Int {
-	ai := IPToBigint(a)
-	bi := IPToBigint(b)
-	i := big.NewInt(0)
-
-	return i.Sub(ai, bi).Abs(i)
+// addressed between them as uint128.Uint128 . It will technically work on v4
+// as well
+func DeltaIP6(a, b net.IP) uint128.Uint128 {
+	ai := IP6ToUint128(a)
+	bi := IP6ToUint128(b)
+	if ai.Cmp(bi) > 0 {
+		return ai.Sub(bi)
+	}
+	return bi.Sub(ai)
 }
 
 // EffectiveVersion returns 4 if the net.IP either contains a v4 address or if
@@ -345,7 +352,7 @@ func IPToHexString(ip net.IP) string {
 	return ip.String()
 }
 
-// IP4ToUint32 converts a net.IPv4 to a uint32.
+// IP4ToUint32 converts a net.IPv4 to a uint32
 func IP4ToUint32(ip net.IP) uint32 {
 	if EffectiveVersion(ip) != IP4Version {
 		return 0
@@ -356,7 +363,7 @@ func IP4ToUint32(ip net.IP) uint32 {
 
 // IP6ToUint64 converts a net.IPv6 to a uint64, but only the first 64bits of
 // address are considered meaningful (any information in the last 64bits will
-// be lost). To work with entire IPv6 addresses use IPToBigint()
+// be lost). To work with entire IPv6 addresses use IP6ToUint128()
 func IP6ToUint64(ip net.IP) uint64 {
 	if EffectiveVersion(ip) != IP6Version {
 		return 0
@@ -367,6 +374,11 @@ func IP6ToUint64(ip net.IP) uint64 {
 	return binary.BigEndian.Uint64(ipn)
 }
 
+// IP6ToUint128 converts a net.IPv6 to a uint128.Uint128
+func IP6ToUint128(ip net.IP) uint128.Uint128 {
+	return uint128.FromBytesBE(ip)
+}
+
 // IncrementIPBy returns a net.IP that is greater than the supplied net.IP by
 // the supplied integer value. If you overflow the IP space it will return
 // the all-ones address
@@ -374,7 +386,8 @@ func IncrementIPBy(ip net.IP, count uint32) net.IP {
 	if EffectiveVersion(ip) == IP4Version {
 		return IncrementIP4By(ip, count)
 	}
-	z := big.NewInt(int64(count))
+	// TODO this needs to be fixed for the IPv4 case!!!!
+	z := uint128.From64(uint64(count))
 	return IncrementIP6By(ip, z)
 }
 
@@ -395,10 +408,13 @@ func IncrementIP4By(ip net.IP, count uint32) net.IP {
 // IncrementIP6By returns a net.IP that is greater than the supplied net.IP by
 // the supplied integer value. If you overflow the IP space it will return the
 // (meaningless in this context) all-ones address
-func IncrementIP6By(ip net.IP, count *big.Int) net.IP {
-	z := IPToBigint(ip)
-	z.Add(z, count)
-	return BigintToIP6(z)
+func IncrementIP6By(ip net.IP, count uint128.Uint128) net.IP {
+	z := IP6ToUint128(ip)
+	nz := z.AddWrap(count)
+	if nz.Cmp(z) < 0 {
+		return generateNetLimits(6, 255)
+	}
+	return Uint128ToIP6(nz)
 }
 
 // Is4in6 returns true if the supplied net.IP is an IPv4 address encapsulated
@@ -502,6 +518,14 @@ func Uint32ToIP4(i uint32) net.IP {
 func Uint64ToIP6(i uint64) net.IP {
 	ip := make([]byte, 16)
 	binary.BigEndian.PutUint64(ip, i)
+	return ip
+}
+
+// Uint128ToIP6 converts a uint128 to an IPv6 address and returns it as a
+// net.IP
+func Uint128ToIP6(i uint128.Uint128) net.IP {
+	ip := make([]byte, 16)
+	i.PutBytesBE(ip)
 	return ip
 }
 
