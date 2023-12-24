@@ -3,10 +3,11 @@ package iplib
 import (
 	"crypto/rand"
 	"math"
-	"math/big"
 	"net"
 	"sort"
 	"sync"
+
+	"lukechampine.com/uint128"
 )
 
 // Net6 is an implementation of Net that supports IPv6 operations. To
@@ -95,22 +96,23 @@ func (n Net6) Controls(ip net.IP) bool {
 }
 
 // Count returns the number of IP addresses in the represented netblock
-func (n Net6) Count() *big.Int {
+func (n Net6) Count() uint128.Uint128 {
 	ones, all := n.Mask().Size()
 
 	// first check if this is an RFC6164 point-to-point subnet
 	exp := all - ones
 	if exp == 1 {
-		return big.NewInt(2) // special handling for RFC6164 /127
+		return uint128.New(2, 0) // special handling for RFC6164 /127
 	}
 	if exp == 0 {
-		return big.NewInt(1) // special handling for /128
+		return uint128.New(1, 0) // special handling for /128
 	}
 
-	oneser, _ := n.Hostmask.Size()
-	exp -= oneser
-	var z, e = big.NewInt(2), big.NewInt(int64(exp))
-	return z.Exp(z, e, nil)
+	moreOnes, _ := n.Hostmask.Size()
+	exp -= moreOnes
+
+	z := uint128.New(2, 0)
+	return z.Lsh(uint(exp - 1))
 }
 
 // Enumerate generates an array of all usable addresses in Net up to the
@@ -140,7 +142,7 @@ func (n Net6) Enumerate(size, offset int) []net.IP {
 
 	fip := n.FirstAddress()
 	if offset != 0 {
-		fip, _ = IncrementIP6WithinHostmask(fip, n.Hostmask, big.NewInt(int64(offset)))
+		fip, _ = IncrementIP6WithinHostmask(fip, n.Hostmask, uint128.New(uint64(offset), 0))
 	}
 
 	// for large requests ( >250 million) response times are very similar
@@ -160,7 +162,7 @@ func (n Net6) Enumerate(size, offset int) []net.IP {
 		wg.Add(1)
 		go func(fip net.IP, pos, count uint32) {
 			defer wg.Done()
-			addrs[pos], _ = IncrementIP6WithinHostmask(fip, n.Hostmask, big.NewInt(int64(pos)))
+			addrs[pos], _ = IncrementIP6WithinHostmask(fip, n.Hostmask, uint128.New(uint64(pos), 0))
 			for i := uint32(1); i < count; i++ {
 				pos++
 				addrs[pos], _ = NextIP6WithinHostmask(addrs[pos-1], n.Hostmask)
@@ -252,7 +254,8 @@ func (n Net6) PreviousNet(masklen int) Net6 {
 // RandomIP returns a random address from this Net6. It uses crypto/rand and
 // so is not the most performant implementation possible
 func (n Net6) RandomIP() net.IP {
-	z, _ := rand.Int(rand.Reader, n.Count())
+	bigz, _ := rand.Int(rand.Reader, n.Count().Big())
+	z := uint128.FromBig(bigz)
 	return IncrementIP6By(n.FirstAddress(), z)
 }
 
@@ -341,13 +344,13 @@ func (n Net6) wildcard() net.IPMask {
 
 // getEnumerationCount returns the size of the array needed to satisfy an
 // Enumerate request. Mostly split out to ease testing of larger values
-func getEnumerationCount(reqSize, offset int, count *big.Int) uint32 {
+func getEnumerationCount(reqSize, offset int, count uint128.Uint128) uint32 {
 	sizes := []uint32{math.MaxUint32}
 
-	if count.IsInt64() {
+	if count.Cmp64(math.MaxUint32) <= 0 {
 		realCount := uint32(0)
-		if int(count.Int64()) > offset {
-			realCount = uint32(count.Int64()) - uint32(offset)
+		if int(count.Lo) > offset {
+			realCount = uint32(count.Lo) - uint32(offset)
 		}
 		sizes = append(sizes, realCount)
 	}

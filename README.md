@@ -1,8 +1,28 @@
-# IPLib 
+# IPLib
 [![Documentation](https://godoc.org/github.com/c-robinson/iplib?status.svg)](http://godoc.org/github.com/c-robinson/iplib)
 [![CircleCI](https://circleci.com/gh/c-robinson/iplib/tree/main.svg?style=svg)](https://circleci.com/gh/c-robinson/iplib/tree/main)
 [![Go Report Card](https://goreportcard.com/badge/github.com/c-robinson/iplib)](https://goreportcard.com/report/github.com/c-robinson/iplib)
 [![Coverage Status](https://coveralls.io/repos/github/c-robinson/iplib/badge.svg?branch=main)](https://coveralls.io/github/c-robinson/iplib?branch=main)
+
+**ATTENTION** version 2.0.0 is a breaking change from previous versions for
+handling IPv6 addresses (functions for IPv4 are unchanged). Calls that result
+in arithmatic operations against IPv6 now use [uint128.Uint128](https://lukechampine.com/uint128)
+instead of `*big.Int`. Until now this library restricted itself to using the
+standard library, but `math/big` is sloooooooooow and the performance gains
+from switching were too large to ignore:
+
+| Benchmark | *big.Int | uint128.Uint128 |
+| --- | --- |-----------------|
+| Benchmark_DeltaIP6 | 79.27 ns/op | 2.809 ns/op     |
+| BenchmarkDecrementIP6By | 50.54 ns/op | 13.88 ns/op     |
+| BenchmarkIncrementIP6By | 50.48 ns/op | 13.92 ns/op     |
+| BenchmarkNet_Count6 | 122.2 ns/op | 11.26 ns/op     |
+
+It would be fantastic to remove this external dependency in some future v3
+that switched to a native `uint128` but for that to happen [this proposal](https://github.com/golang/go/issues/9455)
+(or something similar) would need to be adopted.
+
+**Okay you can stop paying attention now** 
 
 I really enjoy Python's [ipaddress](https://docs.python.org/3/library/ipaddress.html)
 library and Ruby's [ipaddr](https://ruby-doc.org/stdlib-2.5.1/libdoc/ipaddr/rdoc/IPAddr.html),
@@ -114,7 +134,8 @@ func main() {
 Addresses that require or return a count default to using `uint32`, which is
 sufficient for working with the entire IPv4 space. As a rule these functions
 are just lowest-common wrappers around IPv4- or IPv6-specific functions. The
-IPv6-specific variants use `big.Int` so they can access the entire v6 space.
+IPv6-specific variants use `uint128.Uint128` so they can access the entire v6
+space.
 
 ## The iplib.Net interface
 
@@ -152,7 +173,7 @@ fmt.Println(n.Supernet(0))        // 192.168.0.0/15 <nil>
 
 ## Using iplib.Net6
 
-`Net6` represents and IPv6 network. In some ways v6 is simpler than v4, as
+`Net6` represents an IPv6 network. In some ways v6 is simpler than v4, as
 it does away with the special behavior of addresses at the front and back of
 the netblock. For IPv6 the primary problem is the sheer size of the thing:
 there are 2^128th addresses in IPv6, which translates to 340 undecillion!

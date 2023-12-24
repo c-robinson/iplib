@@ -252,8 +252,7 @@ func (n Net4) PreviousNet(masklen int) Net4 {
 	return NewNet4(PreviousIP(n.IP()), masklen)
 }
 
-// RandomIP returns a random address from this Net4. It uses crypto/rand and
-// *big.Int so is not the most performant implementation possible
+// RandomIP returns a random address from this Net4
 func (n Net4) RandomIP() net.IP {
 	z, _ := rand.Int(rand.Reader, big.NewInt(int64(n.Count())))
 	return IncrementIP4By(n.IP(), uint32(z.Uint64()))
@@ -335,8 +334,8 @@ func (n Net4) finalAddress() (net.IP, int) {
 
 	// apply wildcard to network, byte by byte
 	wc := n.Wildcard()
-	for pos, b := range []byte(n.IP()) {
-		xip[pos] = b + wc[pos]
+	for pos := range n.IP() {
+		xip[pos] = n.IP()[pos] + wc[pos]
 	}
 	return xip, ones
 }

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math/big"
 	"net"
+
+	"lukechampine.com/uint128"
 )
 
 func ExampleBigintToIP6() {
@@ -30,7 +32,7 @@ func ExampleDecrementIP4By() {
 }
 
 func ExampleDecrementIP6By() {
-	z := big.NewInt(16777215)
+	z := uint128.New(16777215, 0)
 	ip := net.ParseIP("2001:db8::ffff:ffff")
 	fmt.Println(DecrementIP6By(ip, z))
 	// Output: 2001:db8::ff00:0
@@ -38,8 +40,8 @@ func ExampleDecrementIP6By() {
 
 func ExampleDecrementIP6WithinHostmask() {
 	ip := net.ParseIP("2001:db8:1000::")
-	ip1, _ := DecrementIP6WithinHostmask(ip, NewHostMask(0), big.NewInt(1))
-	ip2, _ := DecrementIP6WithinHostmask(ip, NewHostMask(56), big.NewInt(1))
+	ip1, _ := DecrementIP6WithinHostmask(ip, NewHostMask(0), uint128.New(1, 0))
+	ip2, _ := DecrementIP6WithinHostmask(ip, NewHostMask(56), uint128.New(1, 0))
 	fmt.Println(ip1)
 	fmt.Println(ip2)
 	// Output:
@@ -94,7 +96,7 @@ func ExampleIncrementIP4By() {
 }
 
 func ExampleIncrementIP6By() {
-	z := big.NewInt(16777215)
+	z := uint128.New(16777215, 0)
 	ip := net.ParseIP("2001:db8::ff00:0")
 	fmt.Println(IncrementIP6By(ip, z))
 	// Output: 2001:db8::ffff:ffff
@@ -102,13 +104,18 @@ func ExampleIncrementIP6By() {
 
 func ExampleIncrementIP6WithinHostmask() {
 	ip := net.ParseIP("2001:db8:1000::")
-	ip1, _ := IncrementIP6WithinHostmask(ip, NewHostMask(0), big.NewInt(1))
-	ip2, _ := IncrementIP6WithinHostmask(ip, NewHostMask(56), big.NewInt(1))
+	ip1, _ := IncrementIP6WithinHostmask(ip, NewHostMask(0), uint128.New(1, 0))
+	ip2, _ := IncrementIP6WithinHostmask(ip, NewHostMask(56), uint128.New(1, 0))
 	fmt.Println(ip1)
 	fmt.Println(ip2)
 	// Output:
 	// 2001:db8:1000::1
 	// 2001:db8:1000:0:100::
+}
+
+func ExampleIPToBigint() {
+	fmt.Println(IPToBigint(net.ParseIP("2001:db8:85a3::8a2e:370:7334")))
+	// Output: 42540766452641154071740215577757643572
 }
 
 func ExampleIP4ToARPA() {
@@ -124,6 +131,11 @@ func ExampleIP6ToARPA() {
 func ExampleIP4ToUint32() {
 	fmt.Println(IP4ToUint32(net.ParseIP("192.168.1.1")))
 	// Output: 3232235777
+}
+
+func ExampleIP6ToUint128() {
+	fmt.Println(IP6ToUint128(net.ParseIP("2001:db8:85a3::8a2e:370:7334")))
+	// Output: 42540766452641154071740215577757643572
 }
 
 func ExampleIPToBinaryString() {
@@ -171,6 +183,12 @@ func ExamplePreviousIP6WithinHostmask() {
 func ExampleUint32ToIP4() {
 	fmt.Println(Uint32ToIP4(3232235777))
 	// Output: 192.168.1.1
+}
+
+func ExampleUint128ToIP6() {
+	z, _ := uint128.FromString("42540766452641154071740215577757643572")
+	fmt.Println(Uint128ToIP6(z))
+	// Output: 2001:db8:85a3::8a2e:370:7334
 }
 
 func ExampleVersion() {

@@ -2,8 +2,9 @@ package iplib
 
 import (
 	"encoding/hex"
-	"math/big"
 	"net"
+
+	"lukechampine.com/uint128"
 )
 
 // HostMask is a mask that can be applied to IPv6 addresses to mask out bits
@@ -127,17 +128,14 @@ func (m HostMask) String() string {
 // portion of the supplied net.IP by the supplied integer value. If the
 // input or output value fall outside the boundaries of the hostmask a
 // ErrAddressOutOfRange will be returned
-func DecrementIP6WithinHostmask(ip net.IP, hm HostMask, count *big.Int) (net.IP, error) {
-	xcount := new(big.Int) // do not manipulate 'count'
-	xcount.Set(count)
-
+func DecrementIP6WithinHostmask(ip net.IP, hm HostMask, count uint128.Uint128) (net.IP, error) {
 	bb, bbpos := hm.BoundaryByte()
 	if bbpos == 0 {
 		return net.IP{}, ErrBadMaskLength
 	}
 
 	if bbpos == -1 {
-		return DecrementIP6By(ip, xcount), nil
+		return DecrementIP6By(ip, count), nil
 	}
 
 	// check if ip is outside of hostmask already
@@ -152,8 +150,8 @@ func DecrementIP6WithinHostmask(ip net.IP, hm HostMask, count *big.Int) (net.IP,
 		}
 	}
 
-	bb = decrementBoundaryByte(bb, ip[bbpos], xcount)
-	xip := decrementUnmaskedBytes(ip[:bbpos], xcount)
+	count, bb = decrementBoundaryByte(bb, ip[bbpos], count)
+	xip := decrementUnmaskedBytes(ip[:bbpos], count)
 	if len(xip) == 0 {
 		return xip, ErrAddressOutOfRange
 	}
@@ -173,16 +171,14 @@ func DecrementIP6WithinHostmask(ip net.IP, hm HostMask, count *big.Int) (net.IP,
 // unmasked portion of the supplied net.IP by the supplied integer value. If
 // the input or output value fall outside the boundaries of the hostmask a
 // ErrAddressOutOfRange will be returned
-func IncrementIP6WithinHostmask(ip net.IP, hm HostMask, count *big.Int) (net.IP, error) {
-	xcount := getCloneBigInt(count)
-
+func IncrementIP6WithinHostmask(ip net.IP, hm HostMask, count uint128.Uint128) (net.IP, error) {
 	bb, bbpos := hm.BoundaryByte()
 	if bbpos == 0 {
 		return net.IP{}, ErrBadMaskLength
 	}
 
 	if bbpos == -1 {
-		return IncrementIP6By(ip, xcount), nil
+		return IncrementIP6By(ip, count), nil
 	}
 
 	// check if ip is outside of hostmask already
@@ -192,8 +188,8 @@ func IncrementIP6WithinHostmask(ip net.IP, hm HostMask, count *big.Int) (net.IP,
 		}
 	}
 
-	bb = incrementBoundaryByte(bb, ip[bbpos], xcount)
-	xip := incrementUnmaskedBytes(ip[:bbpos], xcount)
+	count, bb = incrementBoundaryByte(bb, ip[bbpos], count)
+	xip := incrementUnmaskedBytes(ip[:bbpos], count)
 
 	if len(xip) > bbpos {
 		return net.IP{}, ErrAddressOutOfRange
@@ -202,7 +198,9 @@ func IncrementIP6WithinHostmask(ip net.IP, hm HostMask, count *big.Int) (net.IP,
 	xip = append(xip, bb)
 
 	xip = append(xip, make([]byte, 15-bbpos)...)
-
+	if CompareIPs(xip, ip) < 0 {
+		return net.IP{}, ErrAddressOutOfRange
+	}
 	return xip, nil
 }
 
@@ -268,43 +266,63 @@ func PreviousIP6WithinHostmask(ip net.IP, hm HostMask) (net.IP, error) {
 // decrementBoundaryByte takes a boundary-byte, a boundary-value and a count
 // as input and returns a modified boundary byte and count for further
 // processing. bb is used to calculate the maximum value for bv and then the
-// count + bv is divided by that max. The function will return the modulus
-// as a byte value, and the pointer to count will have the quotient
-func decrementBoundaryByte(bb, bv byte, count *big.Int) byte {
-	bmax := 256 - int(bb) // max value of unmasked byte as int
-	if v := count.Cmp(big.NewInt(0)); v <= 0 {
-		return bv
+// count + bv is divided by that max. The function returns a new count and
+// boundary-byte
+func decrementBoundaryByte(bb, bv byte, count uint128.Uint128) (uint128.Uint128, byte) {
+	if count.IsZero() {
+		return count, bv
 	}
-	bigbmax := big.NewInt(int64(bmax))
-	bigmod := new(big.Int)
 
-	count.DivMod(count, bigbmax, bigmod)
-	mod64 := bigmod.Int64()
-	mod := byte(mod64)
-	if mod > bv {
-		count.Add(count, big.NewInt(1))
-		return (byte(bmax) + bv) - mod
+	byteMax := uint128.From64(256 - uint64(bb)) // max value of unmasked bits in the byte
+	byteVal := uint128.From64(uint64(bv))       // cur value of unmasked bits in the byte
+
+	mod := uint128.New(0, 0)
+
+	count, mod = count.QuoRem(byteMax)
+
+	// extract the actual modulus into bmod
+	rb := make([]byte, 16)
+	mod.PutBytesBE(rb)
+	bmod := rb[15]
+
+	if bmod > bv {
+		count = count.Add64(1)
+
+		byteVal = byteVal.Add(byteMax)
+		byteVal = byteVal.Sub(mod)
+
+		// convert to byte
+		byteVal.PutBytesBE(rb)
+
+		return count, rb[15]
 	}
-	return bv - mod
+	return count, bv - bmod
 }
 
 // decrementUnmaskedBytes decrements an arbitrary []byte by count and returns
 // a []byte of the same length
-func decrementUnmaskedBytes(nb []byte, count *big.Int) []byte {
-	z := new(big.Int)
-	z.SetBytes(nb)
-	z.Sub(z, count)
+func decrementUnmaskedBytes(nb []byte, count uint128.Uint128) []byte {
+	if count.IsZero() {
+		return nb
 
-	if v := z.Sign(); v < 0 {
+	}
+
+	// convert the []byte to a uint128, which requires a [16]byte
+	pnb := append(make([]byte, 16-len(nb)), nb...)
+	n := uint128.FromBytesBE(pnb)
+
+	if count.Cmp(n) > 0 {
 		return []byte{}
 	}
 
-	zb := z.Bytes()
-	if len(zb) < len(nb) {
-		zb = append(make([]byte, len(nb)-len(zb)), zb...)
-	}
+	n = n.Sub(count)
 
-	return zb
+	// convert the uint128 back to a []byte
+	xb := make([]byte, 16)
+	n.PutBytesBE(xb)
+
+	// return only as many elements as were passed in
+	return xb[16-len(nb):]
 }
 
 // incrementBoundaryByte takes a boundary-byte, a boundary-value and a count
@@ -312,47 +330,42 @@ func decrementUnmaskedBytes(nb []byte, count *big.Int) []byte {
 // processing. bb is used to calculate the maximum value for bv and then the
 // count + bv is divided by that max. The function will return the modulus
 // as a byte value, and the pointer to count will have the quotient
-func incrementBoundaryByte(bb, bv byte, count *big.Int) byte {
-	if v := count.Cmp(big.NewInt(0)); v <= 0 {
-		return bv
+func incrementBoundaryByte(bb, bv byte, count uint128.Uint128) (uint128.Uint128, byte) {
+	if count.IsZero() {
+		return count, bv
+	}
+	byteMax := uint128.From64(256 - uint64(bb)) // max value of unmasked bits in the byte
+	byteVal := uint128.From64(uint64(bv))       // cur value of unmasked bits in the byte
+
+	count = count.Add(byteVal)
+	if count.Cmp(byteMax) < 0 {
+		return uint128.Uint128{}, byte(count.Lo)
 	}
 
-	bigbmax := big.NewInt(256 - int64(bb)) // max value of unmasked byte as an int
-	bigbval := big.NewInt(int64(bv))       // cur value of unmasked byte as an int
-
-	count.Add(count, bigbval)
-
-	// if count is less than bmax, we're done
-	if v := count.Cmp(bigbmax); v < 0 {
-		b := count.Bytes()
-		count.Set(big.NewInt(0))
-		if len(b) == 0 {
-			return 0
-		}
-		return b[0]
-	}
-
-	bigmod := new(big.Int)
-
-	count.DivMod(count, bigbmax, bigmod)
-	mod := bigmod.Bytes()
-	if len(mod) == 0 {
-		return byte(0)
-	}
-	return mod[0]
+	mod := uint128.New(0, 0)
+	count, mod = count.QuoRem(byteMax)
+	rb := make([]byte, 16)
+	mod.PutBytesBE(rb)
+	return count, rb[15]
 }
 
 // incrementUnmaskedBytes increments an arbitrary []byte by count and returns
 // a []byte of the same length
-func incrementUnmaskedBytes(nb []byte, count *big.Int) []byte {
-	z := new(big.Int)
-	z.SetBytes(nb)
-	z.Add(z, count)
-
-	zb := z.Bytes()
-	if len(zb) < len(nb) {
-		zb = append(make([]byte, len(nb)-len(zb)), zb...)
+func incrementUnmaskedBytes(nb []byte, count uint128.Uint128) []byte {
+	if count.IsZero() {
+		return nb
 	}
 
-	return zb
+	// convert the []byte to a uint128, which requires a [16]byte
+	pnb := append(make([]byte, 16-len(nb)), nb...)
+	n := uint128.FromBytesBE(pnb)
+
+	n = n.Add(count)
+
+	// convert the uint128 back to a []byte
+	xb := make([]byte, 16)
+	n.PutBytesBE(xb)
+
+	// return only as many elements as were passed in
+	return xb[16-len(nb):]
 }

@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"sort"
 	"testing"
+
+	"lukechampine.com/uint128"
 )
 
 func TestCopyIP(t *testing.T) {
@@ -286,6 +288,15 @@ func TestBigintToIP6(t *testing.T) {
 	}
 }
 
+func TestIP6ToUint128(t *testing.T) {
+	for i, tt := range IP6Tests {
+		z := IP6ToUint128(net.ParseIP(tt.ipaddr))
+		if z.String() != tt.bigintval {
+			t.Errorf("[%d] want %s got %s", i, tt.bigintval, z.String())
+		}
+	}
+}
+
 func TestExpandIP6(t *testing.T) {
 	for i, tt := range IP6Tests {
 		s := ExpandIP6(net.ParseIP(tt.ipaddr))
@@ -445,9 +456,8 @@ func TestDeltaIP6(t *testing.T) {
 
 func TestDecrementIP6By(t *testing.T) {
 	for i, tt := range IPDelta6Tests {
-		z := big.Int{}
-		z.SetString(tt.intval, 10)
-		ip := DecrementIP6By(tt.ipaddr, &z)
+		z, _ := uint128.FromString(tt.intval)
+		ip := DecrementIP6By(tt.ipaddr, z)
 		x := CompareIPs(ip, tt.decr)
 		if x != 0 {
 			t.Errorf("[%d] want %s got %s", i, tt.decr, ip)
@@ -457,9 +467,8 @@ func TestDecrementIP6By(t *testing.T) {
 
 func TestIncrementIP6By(t *testing.T) {
 	for i, tt := range IPDelta6Tests {
-		z := big.Int{}
-		z.SetString(tt.intval, 10)
-		ip := IncrementIP6By(tt.ipaddr, &z)
+		z, _ := uint128.FromString(tt.intval)
+		ip := IncrementIP6By(tt.ipaddr, z)
 		x := CompareIPs(ip, tt.incr)
 		if x != 0 {
 			t.Errorf("[%d] want %s got %s", i, tt.incr, ip)

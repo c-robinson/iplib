@@ -1,10 +1,11 @@
 package iplib
 
 import (
-	"math/big"
 	"net"
 	"sort"
 	"testing"
+
+	"lukechampine.com/uint128"
 )
 
 var NewNet6Tests = []struct {
@@ -74,7 +75,7 @@ var Net6Tests = []struct {
 	hostmask    int
 	hostmaskpos int
 	netmasklen  int
-	count       string // converted to big.Int
+	count       string // converted to uint128.Uint128
 }{
 	// 0-7 hostmask applied on byte boundaries
 	{
@@ -235,8 +236,7 @@ func TestNet6_Version(t *testing.T) {
 func TestNet6_Count(t *testing.T) {
 	for i, tt := range Net6Tests {
 		ipn := NewNet6(net.ParseIP(tt.ip), tt.netmasklen, tt.hostmask)
-		ttcount := new(big.Int)
-		ttcount.SetString(tt.count, 10)
+		ttcount, _ := uint128.FromString(tt.count)
 
 		if ipn.IPNet.IP == nil {
 			if tt.count != "0" {
