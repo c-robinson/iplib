@@ -141,13 +141,15 @@ func DecrementIP6WithinHostmask(ip net.IP, hm HostMask, count *big.Int) (net.IP,
 	}
 
 	// check if ip is outside of hostmask already
-	for _, b := range ip[bbpos+1:] {
-		if b > 0 {
+	if bbpos < 15 {
+		for _, b := range ip[bbpos+1:] {
+			if b > 0 {
+				return net.IP{}, ErrAddressOutOfRange
+			}
+		}
+		if ip[bbpos]+bb < bb {
 			return net.IP{}, ErrAddressOutOfRange
 		}
-	}
-	if ip[bbpos]+bb < bb {
-		return net.IP{}, ErrAddressOutOfRange
 	}
 
 	bb = decrementBoundaryByte(bb, ip[bbpos], xcount)
