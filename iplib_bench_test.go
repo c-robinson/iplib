@@ -157,6 +157,15 @@ func BenchmarkNet_Subnet_v4(b *testing.B) {
 	}
 }
 
+func BenchmarkNet_Subnet_v6(b *testing.B) {
+	_, n, _ := ParseCIDR("2001:db8::/98")
+	n6 := n.(Net6)
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = n6.Subnet(99, 0)
+	}
+}
+
 func BenchmarkNet_PreviousNet_v4(b *testing.B) {
 	_, n, _ := ParseCIDR("192.168.0.0/24")
 	n4 := n.(Net4)
