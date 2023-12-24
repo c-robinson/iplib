@@ -164,6 +164,10 @@ func BenchmarkNet_Subnet_v6(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_, _ = n6.Subnet(99, 0)
 	}
+<<<<<<< HEAD
+=======
+
+>>>>>>> 8809338 (Change from *big.Int to uint128.Uint128)
 }
 
 func BenchmarkNet_PreviousNet_v4(b *testing.B) {
@@ -254,4 +258,17 @@ func BenchmarkNet6_NextIPWithinHostmask(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		xip, _ = NextIP6WithinHostmask(xip, hm)
 	}
+<<<<<<< HEAD
+=======
+}
+
+func BenchmarkNet6_IncrementIP6WithinHostmask(b *testing.B) {
+	var xip = net.IP{32, 1, 13, 184, 133, 163, 0, 0, 0, 0, 138, 46, 3, 112, 115, 52}
+	count := uint128.From64(1)
+	hm := NewHostMask(8)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		xip, _ = IncrementIP6WithinHostmask(xip, hm, count)
+	}
+>>>>>>> 8809338 (Change from *big.Int to uint128.Uint128)
 }
