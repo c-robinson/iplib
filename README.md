@@ -173,7 +173,7 @@ fmt.Println(n.Supernet(0))        // 192.168.0.0/15 <nil>
 
 ## Using iplib.Net6
 
-`Net6` represents and IPv6 network. In some ways v6 is simpler than v4, as
+`Net6` represents an IPv6 network. In some ways v6 is simpler than v4, as
 it does away with the special behavior of addresses at the front and back of
 the netblock. For IPv6 the primary problem is the sheer size of the thing:
 there are 2^128th addresses in IPv6, which translates to 340 undecillion!
