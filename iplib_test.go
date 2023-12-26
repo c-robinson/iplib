@@ -162,6 +162,16 @@ func TestIP4ToARPA(t *testing.T) {
 	}
 }
 
+func TestARPAToIP4(t *testing.T) {
+	for i, tt := range IPTests {
+		ip := ARPAToIP4(tt.inarpa)
+		x := CompareIPs(ip, tt.ipaddr)
+		if x != 0 {
+			t.Errorf("[%d] want %s got %s", i, tt.ipaddr, ip)
+		}
+	}
+}
+
 var IP6Tests = []struct {
 	ipaddr    string
 	next      string
@@ -311,6 +321,16 @@ func TestIP6ToARPA(t *testing.T) {
 		s := IPToARPA(net.ParseIP(tt.ipaddr))
 		if s != tt.inarpa {
 			t.Errorf("[%d] want %s got %s", i, tt.inarpa, s)
+		}
+	}
+}
+
+func TestARPAToIP6(t *testing.T) {
+	for i, tt := range IP6Tests {
+		ip := ARPAToIP6(tt.inarpa)
+		x := CompareIPs(ip, net.ParseIP(tt.ipaddr))
+		if x != 0 {
+			t.Errorf("[%d] want %s got %s", i, tt.ipaddr, ip)
 		}
 	}
 }

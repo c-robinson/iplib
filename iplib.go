@@ -92,6 +92,54 @@ func (bi ByIP) Less(a, b int) bool {
 	return false
 }
 
+// ARPAToIP takes a strings containing an ARPA domain and returns the
+// corresponding net.IP
+func ARPAToIP(s string) net.IP {
+	if strings.HasSuffix(s, ".ip6.arpa.") {
+		return ARPAToIP6(s)
+	}
+	return ARPAToIP4(s)
+}
+
+// ARPAToIP4 takes a string containing an IPv4 ARPA domain and returns the
+// corresponding net.IP
+func ARPAToIP4(s string) net.IP {
+	buf := strings.Split(s, ".")
+	if len(buf) != 6 {
+		return nil
+	}
+	if buf[4] != "in-addr" || buf[5] != "arpa" {
+		return nil
+	}
+	return net.ParseIP(fmt.Sprintf("%s.%s.%s.%s", buf[3], buf[2], buf[1], buf[0]))
+}
+
+// ARPAToIP6 takes a string containing an IPv6 ARPA domain and returns the
+// corresponding net.IP
+func ARPAToIP6(s string) net.IP {
+	if !strings.HasSuffix(s, ".ip6.arpa") {
+		return nil
+	}
+	s = strings.TrimSuffix(s, ".ip6.arpa")
+	s = strings.Replace(s, ".", "", -1)
+
+	size := len(s)
+	if size != 32 {
+		return nil
+	}
+	// i am pretty sure we don't need to consider runes here
+	buf := ""
+	for _, c := range s {
+		buf = string(c) + buf
+	}
+
+	h, err := hex.DecodeString(buf)
+	if err != nil {
+		return nil
+	}
+	return h
+}
+
 // BigintToIP6 converts a big.Int to an ip6 address and returns it as a net.IP
 func BigintToIP6(z *big.Int) net.IP {
 	b := z.Bytes()

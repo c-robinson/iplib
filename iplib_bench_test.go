@@ -26,6 +26,22 @@ func BenchmarkNewNet(b *testing.B) {
 	}
 }
 
+func BenchmarkARPAToIP4(b *testing.B) {
+	arpa := "1.0.168.192.in-addr.arpa"
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		ARPAToIP4(arpa)
+	}
+}
+
+func BenchmarkARPAToIP6(b *testing.B) {
+	arpa := "f.f.f.f.f.f.f.f.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa"
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		ARPAToIP6(arpa)
+	}
+}
+
 func Benchmark_DeltaIP4(b *testing.B) {
 	var xip = net.IP{10, 255, 255, 255}
 	var zip = net.IP{192, 168, 23, 5}
