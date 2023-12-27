@@ -13,7 +13,7 @@ given interface on a network, and is unique _within_ that network.
 ## Installing
 
 ```sh
-go get -u github.com/c-robinson/iplib/iid
+go get -u github.com/c-robinson/iplib/v2/iid
 ```
 
 ## Using IID
@@ -29,7 +29,7 @@ import (
 	"fmt"
 	"net"
 	
-	"github.com/c-robinson/iplib/iid"
+	"github.com/c-robinson/iplib/v2/iid"
 )
 
 func main() {
@@ -70,7 +70,7 @@ import (
 	"fmt"
 	"net"
 	
-	"github.com/c-robinson/iplib/iid"
+	"github.com/c-robinson/iplib/v2/iid"
 )
 
 func main() {
@@ -108,7 +108,7 @@ import (
 	"fmt"
 	"net"
 	
-	"github.com/c-robinson/iplib/iid"
+	"github.com/c-robinson/iplib/v2/iid"
 )
 
 func main() {
@@ -138,7 +138,7 @@ import (
 	"fmt"
 	"net"
 	
-	"github.com/c-robinson/iplib/iid"
+	"github.com/c-robinson/iplib/v2/iid"
 )
 
 func main() {

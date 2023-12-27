@@ -14,7 +14,7 @@ are contained within an reserved IP address block.
 ## Installing
 
 ```sh
-go get -u github.com/c-robinson/iplib/iana
+go get -u github.com/c-robinson/iplib/v2/iana
 ```
 
 ## Using IANA
@@ -30,8 +30,8 @@ import (
 	"fmt"
 	"net"
 	
-	"github.com/c-robinson/iplib"
-	"github.com/c-robinson/iplib/iana"
+	"github.com/c-robinson/iplib/v2"
+	"github.com/c-robinson/iplib/v2/iana"
 )
 
 func main() {

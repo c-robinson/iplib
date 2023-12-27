@@ -92,7 +92,7 @@ and [Net6](#using-iplibnet6) sections below.
 ## Installing
 
 ```sh
-go get -u github.com/c-robinson/iplib
+go get -u github.com/c-robinson/iplib/v2
 ```
 
 ## Using iplib
@@ -107,7 +107,7 @@ import (
 	"net"
 	"sort"
 	
-	"github.com/c-robinson/iplib"
+	"github.com/c-robinson/iplib/v2"
 )
 
 
