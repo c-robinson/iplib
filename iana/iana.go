@@ -22,7 +22,7 @@ import (
 	"net"
 	"sort"
 
-	"github.com/c-robinson/iplib"
+	"github.com/c-robinson/iplib/v2"
 )
 
 // Registry holds the aggregated network list from IANA's v4 and v6 registries.

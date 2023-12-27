@@ -22,7 +22,7 @@ import (
 	"errors"
 	"net"
 
-	"github.com/c-robinson/iplib"
+	"github.com/c-robinson/iplib/v2"
 )
 
 // Scope describes the availability of an IPv6 IID and determines how IID-
