@@ -29,7 +29,7 @@ import (
 	"fmt"
 	"net"
 	
-	"github.com/c-robinson/iplib/v2/iid"
+	"github.com/c-robinson/iplib/iid/v2"
 )
 
 func main() {

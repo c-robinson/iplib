@@ -31,7 +31,7 @@ import (
 	"net"
 	
 	"github.com/c-robinson/iplib/v2"
-	"github.com/c-robinson/iplib/v2/iana"
+	"github.com/c-robinson/iplib/iana/v2"
 )
 
 func main() {
