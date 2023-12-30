@@ -111,5 +111,5 @@ func fitNetworkBetween(a, b net.IP, mask int) (Net, bool, error) {
 	if va == 0 && vb == 0 {
 		return xnet, true, nil
 	}
-	return fitNetworkBetween(a, b, mask + 1)
+	return fitNetworkBetween(a, b, mask+1)
 }
