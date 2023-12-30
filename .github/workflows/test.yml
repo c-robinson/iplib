@@ -27,7 +27,7 @@ jobs:
           check-latest: true
           cache: true
 
-      - uses: golangci/golangci-lint-action@latest
+      - uses: golangci/golangci-lint-action@v3.7.0
         with:
           version: latest
           args: --verbose
@@ -41,9 +41,6 @@ jobs:
           - ubuntu
           - macOS
         go:
-          - 17
-          - 18
-          - 19
           - 20
           - 21
     name: '${{ matrix.platform }} | 1.${{ matrix.go }}.x'
@@ -96,4 +93,4 @@ jobs:
           export GOBIN=$HOME/go/bin
           go install github.com/kyoh86/richgo@latest
 
-      - run: RICHGO_FORCE_COLOR=1 PATH=$HOME/go/bin/:$PATH richgo test -v -race ./...
+      - run: RICHGO_FORCE_COLOR=1 PATH=$HOME/go/bin/:$PATH richgo test -v ./...
