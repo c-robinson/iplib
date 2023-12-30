@@ -276,8 +276,7 @@ func decrementBoundaryByte(bb, bv byte, count uint128.Uint128) (uint128.Uint128,
 	byteMax := uint128.From64(256 - uint64(bb)) // max value of unmasked bits in the byte
 	byteVal := uint128.From64(uint64(bv))       // cur value of unmasked bits in the byte
 
-	mod := uint128.New(0, 0)
-
+	var mod uint128.Uint128
 	count, mod = count.QuoRem(byteMax)
 
 	// extract the actual modulus into bmod
@@ -342,7 +341,7 @@ func incrementBoundaryByte(bb, bv byte, count uint128.Uint128) (uint128.Uint128,
 		return uint128.Uint128{}, byte(count.Lo)
 	}
 
-	mod := uint128.New(0, 0)
+	var mod uint128.Uint128
 	count, mod = count.QuoRem(byteMax)
 	rb := make([]byte, 16)
 	mod.PutBytesBE(rb)

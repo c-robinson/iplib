@@ -9,13 +9,13 @@ import (
 
 func BenchmarkParseCIDR4(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		ParseCIDR("10.0.0.0/24")
+		_, _, _ = ParseCIDR("10.0.0.0/24")
 	}
 }
 
 func BenchmarkParseCIDR6(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		ParseCIDR("2001:db8::/98")
+		_, _, _ = ParseCIDR("2001:db8::/98")
 	}
 }
 

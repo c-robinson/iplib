@@ -69,10 +69,7 @@ func (bn ByNet) Swap(a, b int) {
 // implementation, see CompareNets()
 func (bn ByNet) Less(a, b int) bool {
 	val := CompareNets(bn[a], bn[b])
-	if val == -1 {
-		return true
-	}
-	return false
+	return val == -1
 }
 
 // ParseCIDR returns a new Net object. It is a passthrough to net.ParseCIDR
