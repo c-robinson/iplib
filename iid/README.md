@@ -1,8 +1,7 @@
 # iid
 [![Documentation](https://godoc.org/github.com/c-robinson/iplib?status.svg)](http://godoc.org/github.com/c-robinson/iplib/v2/iid)
-[![CircleCI](https://circleci.com/gh/c-robinson/iplib/tree/main.svg?style=svg)](https://circleci.com/gh/c-robinson/iplib/tree/main)
 [![Go Report Card](https://goreportcard.com/badge/github.com/c-robinson/iplib)](https://goreportcard.com/report/github.com/c-robinson/iplib)
-[![Coverage Status](https://coveralls.io/repos/github/c-robinson/iplib/badge.svg?branch=main)](https://coveralls.io/github/c-robinson/iplib?branch=main)
+[![Tests](https://img.shields.io/github/actions/workflow/status/c-robinson/iplib/test.yml?branch=main&longCache=true&label=Test&logo=github%20actions&logoColor=fff)](https://github.com/c-robinson/iplib/actions?query=workflow%3ATest)
 
 This package implements functions for generating and validating IPv6 Interface
 Identifiers (IID's) for use in link-local, global unicast and Stateless Address
