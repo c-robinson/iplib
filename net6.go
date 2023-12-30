@@ -151,8 +151,8 @@ func (n Net6) Enumerate(size, offset int) []net.IP {
 	// our worker-pool based on request size; and [b] don't have to worry
 	// about exhausting some upper bound of goroutines -- enumerate requests
 	// are limited to MaxUint32, so we won't generate more than 65536
-	limit := uint32(65535)
-	pos := uint32(0)
+	limit := 65535
+	pos := 0
 	wg := sync.WaitGroup{}
 	for pos < count {
 		incr := limit
@@ -160,12 +160,14 @@ func (n Net6) Enumerate(size, offset int) []net.IP {
 			incr = count - pos
 		}
 		wg.Add(1)
-		go func(fip net.IP, pos, count uint32) {
+		go func(fip net.IP, pos, count int) {
 			defer wg.Done()
-			addrs[pos], _ = IncrementIP6WithinHostmask(fip, n.Hostmask, uint128.New(uint64(pos), 0))
-			for i := uint32(1); i < count; i++ {
-				pos++
-				addrs[pos], _ = NextIP6WithinHostmask(addrs[pos-1], n.Hostmask)
+			firstip := CopyIP(fip)
+			lpos := pos
+			addrs[lpos], _ = IncrementIP6WithinHostmask(firstip, n.Hostmask, uint128.New(uint64(lpos), 0))
+			for i := 1; i < count; i++ {
+				lpos++
+				addrs[lpos], _ = NextIP6WithinHostmask(addrs[lpos-1], n.Hostmask)
 			}
 		}(fip, pos, incr)
 		pos = pos + incr
@@ -344,19 +346,19 @@ func (n Net6) wildcard() net.IPMask {
 
 // getEnumerationCount returns the size of the array needed to satisfy an
 // Enumerate request. Mostly split out to ease testing of larger values
-func getEnumerationCount(reqSize, offset int, count uint128.Uint128) uint32 {
-	sizes := []uint32{math.MaxUint32}
+func getEnumerationCount(reqSize, offset int, count uint128.Uint128) int {
+	sizes := []int{math.MaxUint32}
 
 	if count.Cmp64(math.MaxUint32) <= 0 {
-		realCount := uint32(0)
+		realCount := 0
 		if int(count.Lo) > offset {
-			realCount = uint32(count.Lo) - uint32(offset)
+			realCount = int(count.Lo) - offset
 		}
 		sizes = append(sizes, realCount)
 	}
 
 	if uint32(reqSize) != 0 {
-		sizes = append(sizes, uint32(reqSize))
+		sizes = append(sizes, reqSize)
 	}
 
 	sort.Slice(sizes, func(i, j int) bool { return sizes[i] < sizes[j] })
