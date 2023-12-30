@@ -172,7 +172,7 @@ func GetRFCsForNetwork(n iplib.Net) []string {
 func IsForwardable(n iplib.Net) bool {
 	reservations := GetReservationsForNetwork(n)
 	for _, r := range reservations {
-		if r.Forwardable == false {
+		if !r.Forwardable {
 			return false
 		}
 	}
@@ -187,7 +187,7 @@ func IsForwardable(n iplib.Net) bool {
 func IsGlobal(n iplib.Net) bool {
 	reservations := GetReservationsForNetwork(n)
 	for _, r := range reservations {
-		if r.Global == false {
+		if !r.Global {
 			return false
 		}
 	}
@@ -203,7 +203,7 @@ func IsGlobal(n iplib.Net) bool {
 func IsReserved(n iplib.Net) bool {
 	reservations := GetReservationsForNetwork(n)
 	for _, r := range reservations {
-		if r.Reserved == true {
+		if r.Reserved {
 			return true
 		}
 	}

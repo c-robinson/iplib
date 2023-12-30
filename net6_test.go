@@ -344,6 +344,11 @@ func TestNet6_Enumerate(t *testing.T) {
 				t.Errorf("[%d] last address: want %s got %s", i, tt.last, addrlist[len(addrlist)-1])
 			}
 		}
+		for ii, a := range addrlist {
+			if a == nil {
+				t.Errorf("[%d] address %d is nil", i, ii)
+			}
+		}
 	}
 }
 
