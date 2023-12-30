@@ -271,3 +271,12 @@ func BenchmarkNet6_NextIPWithinHostmask(b *testing.B) {
 		xip, _ = NextIP6WithinHostmask(xip, hm)
 	}
 }
+
+func BenchmarkNet6_Enumerate(b *testing.B) {
+	_, n, _ := ParseCIDR("2001:db8::/98")
+	n6 := n.(Net6)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		n6.Enumerate(8192, 1024)
+	}
+}
