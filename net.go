@@ -100,6 +100,10 @@ func ParseCIDR(s string) (net.IP, Net, error) {
 func fitNetworkBetween(a, b net.IP, mask int) (Net, bool, error) {
 	xnet := NewNet(a, mask)
 
+	if CompareIPs(a, b) > 0 {
+		return NewNet(b, maskMax(b)), true, nil
+	}
+
 	va := CompareIPs(xnet.FirstAddress(), a)
 	vb := CompareIPs(xnet.LastAddress(), b)
 	if va >= 0 && vb < 0 {
@@ -109,4 +113,11 @@ func fitNetworkBetween(a, b net.IP, mask int) (Net, bool, error) {
 		return xnet, true, nil
 	}
 	return fitNetworkBetween(a, b, mask+1)
+}
+
+func maskMax(ip net.IP) int {
+	if EffectiveVersion(ip) == 4 {
+		return 32
+	}
+	return 128
 }

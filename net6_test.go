@@ -222,6 +222,12 @@ var Net6Tests = []struct {
 		"ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
 		0, -1, 0, "340282366920938463463374607431768211456",
 	},
+	{
+		"::",
+		"::",
+		"ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+		0, -1, 0, "340282366920938463463374607431768211456",
+	},
 }
 
 func TestNet6_Version(t *testing.T) {

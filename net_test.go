@@ -105,6 +105,10 @@ var NewNetBetweenTests = []struct {
 		"192.168.1.0/24", false, nil,
 	},
 	{
+		net.ParseIP("12.168.0.254"), net.ParseIP("12.168.0.255"),
+		"12.168.0.254/32", true, nil,
+	},
+	{
 		net.ParseIP("2001:db7:ffff:ffff:ffff:ffff:ffff:ffff"), net.ParseIP("2001:db8:0:1::"),
 		"2001:db8::/64", true, nil,
 	},
