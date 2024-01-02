@@ -4,8 +4,6 @@ import (
 	"net"
 	"sort"
 	"testing"
-
-	"lukechampine.com/uint128"
 )
 
 var NewNet6Tests = []struct {
@@ -220,13 +218,13 @@ var Net6Tests = []struct {
 		"2001:0db8::",
 		"::",
 		"ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
-		0, -1, 0, "340282366920938463463374607431768211456",
+		0, -1, 0, "340282366920938463463374607431768211455",
 	},
 	{
 		"::",
 		"::",
 		"ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
-		0, -1, 0, "340282366920938463463374607431768211456",
+		0, -1, 0, "340282366920938463463374607431768211455",
 	},
 }
 
@@ -242,7 +240,6 @@ func TestNet6_Version(t *testing.T) {
 func TestNet6_Count(t *testing.T) {
 	for i, tt := range Net6Tests {
 		ipn := NewNet6(net.ParseIP(tt.ip), tt.netmasklen, tt.hostmask)
-		ttcount, _ := uint128.FromString(tt.count)
 
 		if ipn.IPNet.IP == nil {
 			if tt.count != "0" {
@@ -251,8 +248,8 @@ func TestNet6_Count(t *testing.T) {
 			continue
 		}
 
-		if v := ttcount.Cmp(ipn.Count()); v != 0 {
-			t.Errorf("[%d] count: want %s got %d", i, tt.count, ipn.Count())
+		if tt.count != ipn.Count().String() {
+			t.Errorf("[%d] count: want %s got %s", i, tt.count, ipn.Count().String())
 		}
 	}
 }

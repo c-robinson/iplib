@@ -111,6 +111,10 @@ func (n Net6) Count() uint128.Uint128 {
 	moreOnes, _ := n.Hostmask.Size()
 	exp -= moreOnes
 
+	if exp == 128 {
+		return uint128.Max
+	}
+
 	z := uint128.New(2, 0)
 	return z.Lsh(uint(exp - 1))
 }
