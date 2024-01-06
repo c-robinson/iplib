@@ -187,11 +187,7 @@ func (n Net6) FirstAddress() net.IP {
 
 // LastAddress returns the last usable address for the represented network
 func (n Net6) LastAddress() net.IP {
-	xip := make([]byte, len(n.IPNet.IP))
-	wc := n.wildcard()
-	for pos := range n.IP() {
-		xip[pos] = n.IP()[pos] + (wc[pos] - n.Hostmask[pos])
-	}
+	xip, _ := n.finalAddress()
 	return xip
 }
 
@@ -338,6 +334,20 @@ func (n Net6) contained(ip net.IP) bool {
 		}
 	}
 	return true
+}
+
+// finalAddress is here mostly because it also exists in Net4, but there
+// are cases where it is valuable to have a method for both Net
+// implementations that returns the last address in the netblock
+func (n Net6) finalAddress() (net.IP, int) {
+	xip := make([]byte, len(n.IPNet.IP))
+	ones, _ := n.Mask().Size()
+
+	wc := n.wildcard()
+	for pos := range n.IP() {
+		xip[pos] = n.IP()[pos] + (wc[pos] - n.Hostmask[pos])
+	}
+	return xip, ones
 }
 
 func (n Net6) wildcard() net.IPMask {
