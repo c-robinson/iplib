@@ -42,75 +42,76 @@ func TestNewNet(t *testing.T) {
 }
 
 var NewNetBetweenTests = []struct {
-	start net.IP
-	end   net.IP
-	xnet  string
-	exact bool
-	err   error
+	start   net.IP
+	end     net.IP
+	xnet    string
+	exact   bool
+	err     error
+	netslen int
 }{
-	{
-		net.ParseIP("192.168.0.255"), net.ParseIP("192.168.2.0"),
-		"192.168.1.0/24", false, nil,
-	},
-	{
+	{ // 0
 		net.ParseIP("192.168.0.255"), net.ParseIP("10.0.0.0"),
-		"", false, ErrNoValidRange,
+		"", false, ErrNoValidRange, 0,
 	},
 	{
 		net.ParseIP("192.168.0.255"), net.ParseIP("2001:db8:0:1::"),
-		"", false, ErrNoValidRange,
+		"", false, ErrNoValidRange, 0,
 	},
 	{
 		net.ParseIP("2001:db8:0:1::"), net.ParseIP("192.168.0.255"),
-		"", false, ErrNoValidRange,
+		"", false, ErrNoValidRange, 0,
+	},
+	{
+		net.ParseIP("2001:db8:0:1::"), net.ParseIP("2001:db8::"),
+		"", false, ErrNoValidRange, 0,
 	},
 	{
 		net.ParseIP("192.168.0.255"), net.ParseIP("192.168.0.255"),
-		"", false, ErrNoValidRange,
+		"192.168.0.255/32", true, nil, 1,
+	},
+	{ // 5
+		net.ParseIP("2001:db8:0:1::"), net.ParseIP("2001:db8:0:1::"),
+		"2001:db8:0:1::/128", true, nil, 1,
 	},
 	{
-		net.ParseIP("192.168.0.255"), net.ParseIP("192.168.1.1"),
-		"192.168.1.0/32", true, nil,
+		net.ParseIP("192.168.1.0"), net.ParseIP("192.168.2.0"),
+		"192.168.1.0/24", false, nil, 2,
 	},
 	{
-		net.ParseIP("192.168.1.0"), net.ParseIP("192.168.1.2"),
-		"192.168.1.1/32", true, nil,
+		net.ParseIP("2001:db8:1::"), net.ParseIP("2001:db8:2::"),
+		"2001:db8:1::/48", false, nil, 2,
+	},
+	{
+		net.ParseIP("192.168.1.0"), net.ParseIP("192.168.1.255"),
+		"192.168.1.0/24", true, nil, 1,
+	},
+	{
+		net.ParseIP("2001:db8:1::"), net.ParseIP("2001:db8:1:ffff:ffff:ffff:ffff:ffff"),
+		"2001:db8:1::/48", true, nil, 1,
+	},
+	{ // 10
+		net.ParseIP("192.168.1.0"), net.ParseIP("192.168.1.1"),
+		"192.168.1.0/31", true, nil, 1,
+	},
+	{
+		net.ParseIP("2001:db8:1::"), net.ParseIP("2001:db8:1::1"),
+		"2001:db8:1::/127", true, nil, 1,
 	},
 	{
 		net.ParseIP("192.168.0.255"), net.ParseIP("192.168.1.2"),
-		"192.168.1.0/31", true, nil,
+		"192.168.0.255/32", false, nil, 3,
 	},
 	{
-		net.ParseIP("192.168.0.255"), net.ParseIP("192.168.1.3"),
-		"192.168.1.0/31", false, nil,
+		net.ParseIP("2001:db8:0:ffff:ffff:ffff:ffff:ffff"), net.ParseIP("2001:db8:1::1"),
+		"2001:db8:0:ffff:ffff:ffff:ffff:ffff/128", false, nil, 2,
 	},
 	{
-		net.ParseIP("192.168.1.0"), net.ParseIP("192.168.1.3"),
-		"192.168.1.0/30", true, nil,
+		net.ParseIP("10.0.0.0"), net.ParseIP("255.0.0.0"),
+		"10.0.0.0/7", false, nil, 13,
 	},
-	{
-		net.ParseIP("192.168.0.255"), net.ParseIP("192.168.1.4"),
-		"192.168.1.0/30", false, nil,
-	},
-	{
-		net.ParseIP("192.168.0.255"), net.ParseIP("192.168.1.5"),
-		"192.168.1.0/30", false, nil,
-	},
-	{
-		net.ParseIP("192.168.0.254"), net.ParseIP("192.168.2.0"),
-		"192.168.0.255/32", false, nil,
-	},
-	{
-		net.ParseIP("192.168.0.255"), net.ParseIP("192.168.2.0"),
-		"192.168.1.0/24", false, nil,
-	},
-	{
-		net.ParseIP("12.168.0.254"), net.ParseIP("12.168.0.255"),
-		"12.168.0.254/32", true, nil,
-	},
-	{
-		net.ParseIP("2001:db7:ffff:ffff:ffff:ffff:ffff:ffff"), net.ParseIP("2001:db8:0:1::"),
-		"2001:db8::/64", true, nil,
+	{ // 15
+		net.ParseIP("2001:db8::"), net.ParseIP("2001:db8:ffff:ffff:ffff:ffff:ffff::"),
+		"2001:db8::/33", false, nil, 81,
 	},
 }
 
@@ -128,6 +129,23 @@ func TestNewNetBetween(t *testing.T) {
 			}
 			if exact != tt.exact {
 				t.Errorf("[%d] NewNetBetween(%s, %s) expected '%t', got '%t'", i, tt.start, tt.end, tt.exact, exact)
+			}
+		}
+	}
+}
+
+func TestAllNetsBetween(t *testing.T) {
+	for i, tt := range NewNetBetweenTests {
+		//t.Logf("[%d] nets between %s and %s", i, tt.start, tt.end)
+		xnets, err := AllNetsBetween(tt.start, tt.end)
+		//t.Logf("[%d] got %+v, '%v'", i, xnets, err)
+		if e := compareErrors(err, tt.err); len(e) > 0 {
+			t.Errorf("[%d] expected error '%v', got '%v'", i, tt.err, err)
+		}
+		if tt.err == nil {
+			if len(xnets) != tt.netslen {
+				t.Logf("[%d] AllNetsBetween(%s, %s) [%+v]", i, tt.start, tt.end, xnets)
+				t.Errorf("[%d] expected %d networks, got %d", i, tt.netslen, len(xnets))
 			}
 		}
 	}

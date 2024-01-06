@@ -17,6 +17,7 @@ type Net interface {
 	Mask() net.IPMask
 	String() string
 	Version() int
+	finalAddress() (net.IP, int)
 }
 
 // NewNet returns a new Net object containing ip at the specified masklen. In
@@ -30,13 +31,57 @@ func NewNet(ip net.IP, masklen int) Net {
 	return NewNet4(ip, masklen)
 }
 
+// AllNetsBetween takes two net.IPs as input and will return a slice of
+// netblocks spanning the range between them, inclusively, even if it must
+// return one or more single-address netblocks to do so
+func AllNetsBetween(a, b net.IP) ([]Net, error) {
+	var lastNet Net
+	if EffectiveVersion(a) == IP4Version {
+		lastNet = Net4{}
+	} else {
+		lastNet = Net6{}
+	}
+
+	var nets []Net
+
+	for {
+		ipnet, tf, err := NewNetBetween(a, b)
+		if err != nil {
+			return nets, err
+		}
+
+		nets = append(nets, ipnet)
+		if tf {
+			return nets, nil
+		}
+
+		finalIP, _ := ipnet.finalAddress()
+		if CompareIPs(finalIP, b) > 0 {
+			return nets, nil
+		}
+
+		if lastNet.IP() == nil {
+			lastNet = ipnet
+		} else if CompareIPs(ipnet.IP(), lastNet.IP()) > 0 {
+			lastNet = ipnet
+		} else {
+			return nets, nil
+		}
+
+		a = NextIP(finalIP)
+		if CompareIPs(a, b) > 0 {
+			return nets, nil
+		}
+	}
+}
+
 // NewNetBetween takes two net.IP's as input and will return the largest
-// netblock that can fit between them (exclusive of the IP's themselves).
+// netblock that can fit between them inclusive of at least the first address.
 // If there is an exact fit it will set a boolean to true, otherwise the bool
 // will be false. If no fit can be found (probably because a >= b) an
-// ErrNoValidRange will be returned.
+// ErrNoValidRange will be returned
 func NewNetBetween(a, b net.IP) (Net, bool, error) {
-	if CompareIPs(a, b) != -1 {
+	if CompareIPs(a, b) == 1 { // != -1 {
 		return nil, false, ErrNoValidRange
 	}
 
@@ -44,7 +89,7 @@ func NewNetBetween(a, b net.IP) (Net, bool, error) {
 		return nil, false, ErrNoValidRange
 	}
 
-	return fitNetworkBetween(NextIP(a), PreviousIP(b), 1)
+	return fitNetworkBetween(a, b, 1)
 }
 
 // ByNet implements sort.Interface for iplib.Net based on the
@@ -104,13 +149,14 @@ func fitNetworkBetween(a, b net.IP, mask int) (Net, bool, error) {
 		return NewNet(b, maskMax(b)), true, nil
 	}
 
-	va := CompareIPs(xnet.FirstAddress(), a)
-	vb := CompareIPs(xnet.LastAddress(), b)
-	if va >= 0 && vb < 0 {
-		return xnet, false, nil
-	}
+	finalIP, _ := xnet.finalAddress()
+	va := CompareIPs(xnet.IP(), a)
+	vb := CompareIPs(finalIP, b)
 	if va == 0 && vb == 0 {
 		return xnet, true, nil
+	}
+	if va >= 0 && vb <= 0 {
+		return xnet, false, nil
 	}
 	return fitNetworkBetween(a, b, mask+1)
 }
