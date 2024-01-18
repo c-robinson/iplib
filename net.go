@@ -81,7 +81,7 @@ func AllNetsBetween(a, b net.IP) ([]Net, error) {
 // will be false. If no fit can be found (probably because a >= b) an
 // ErrNoValidRange will be returned
 func NewNetBetween(a, b net.IP) (Net, bool, error) {
-	if CompareIPs(a, b) == 1 { // != -1 {
+	if CompareIPs(a, b) == 1 {
 		return nil, false, ErrNoValidRange
 	}
 
@@ -89,7 +89,7 @@ func NewNetBetween(a, b net.IP) (Net, bool, error) {
 		return nil, false, ErrNoValidRange
 	}
 
-	return fitNetworkBetween(a, b, 1)
+	return fitNetworkBetween(a, b, 0)
 }
 
 // ByNet implements sort.Interface for iplib.Net based on the
