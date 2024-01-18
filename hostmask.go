@@ -16,7 +16,7 @@ import (
 // which the final 64bits of the address are used to construct a unique host
 // identifier and the allocator only has control of the first 64bits. So the
 // next IP from 2001:db8:1234:5678:: would be 2001:db8:1234:5679 instead of
-// 2001:db8:1234:5678::1. Here is a Net6 object eing initialized without a
+// 2001:db8:1234:5678::1. Here is a Net6 object being initialized without a
 // hostmask:
 //
 //	n := NewNet6(2001:db8::, 56, 0)
