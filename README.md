@@ -211,3 +211,8 @@ fmt.Println(n.Hostmask.String())        // 0000000000000000f0ffffffffffffff
 fmt.Println(n.Subnet(0, 60))            // [2001:db8::/57 2001:db8:0:80::/57] <nil>
 fmt.Println(n.Supernet(0, 60))          // 2001:db8::/55 <nil>
 ```
+
+## Test driving
+[IPfool](github.com/c-robinson/ipfool) is a simple command-line tool that I
+wrote to test many of the features within this library and might be useful in
+evaluating it.
