@@ -378,6 +378,22 @@ func IPToBigint(ip net.IP) *big.Int {
 	return z
 }
 
+// IPToBinarySlice returns the given net.IP as a []byte whose
+// values are the binary representation of the IP
+func IPToBinarySlice(ip net.IP) []byte {
+	var bits []byte
+	if EffectiveVersion(ip) == 4 {
+		ip = ForceIP4(ip)
+	}
+	for _, octet := range ip {
+		for i := 7; i >= 0; i-- {
+			bit := (octet >> i) & 1
+			bits = append(bits, bit)
+		}
+	}
+	return bits
+}
+
 // IPToBinaryString returns the given net.IP as a binary string
 func IPToBinaryString(ip net.IP) string {
 	var sa []string
