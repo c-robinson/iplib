@@ -139,12 +139,12 @@ var NetTests = []struct {
 	},
 	{
 		"MultipleReservationsv6",
-		10,
+		11,
 		"2001::/16",
-		[]string{"RFC1752", "RFC2928", "RFC3849", "RFC4380", "RFC5180", "RFC7343", "RFC7450", "RFC7535", "RFC7723", "RFC7954", "RFC8155", "RFC8190"},
+		[]string{"RFC1752", "RFC2928", "RFC3849", "RFC4380", "RFC5180", "RFC7343", "RFC7450", "RFC7535", "RFC7723", "RFC8155", "RFC8190", "RFC9374", "RFC9665"},
 		false,
 		false,
-		true,
+		false,
 	},
 	{
 		"KnowsAbout4in6",
@@ -219,4 +219,67 @@ func equalList(a, b []string) bool {
 	}
 
 	return true
+}
+
+func TestCurrentIPv6Reservations(t *testing.T) {
+	for _, tt := range []struct {
+		address     string
+		network     string
+		rfc         string
+		forwardable bool
+		global      bool
+	}{
+		{"100:0:0:1::1", "100:0:0:1::/64", "RFC9780", false, false},
+		{"2001:1::3", "2001:1::3/128", "RFC9665", true, true},
+		{"2001:30::1", "2001:30::/28", "RFC9374", true, true},
+		{"2001:3f:ffff:ffff:ffff:ffff:ffff:ffff", "2001:30::/28", "RFC9374", true, true},
+		{"3fff::1", "3fff::/20", "RFC9637", false, false},
+		{"3fff:fff:ffff:ffff:ffff:ffff:ffff:ffff", "3fff::/20", "RFC9637", false, false},
+		{"5f00::1", "5f00::/16", "RFC9602", true, false},
+	} {
+		t.Run(tt.address, func(t *testing.T) {
+			for _, r := range GetReservationsForIP(net.ParseIP(tt.address)) {
+				if r.Network.String() != tt.network {
+					continue
+				}
+				if !equalList(r.RFC, []string{tt.rfc}) || r.Forwardable != tt.forwardable || r.Global != tt.global || r.Reserved {
+					t.Errorf("unexpected reservation: %+v", r)
+				}
+				return
+			}
+			t.Errorf("missing %s reservation for %s", tt.network, tt.address)
+		})
+	}
+
+	for _, address := range []string{"2001:5::1", "3fff:1000::1"} {
+		for _, r := range GetReservationsForIP(net.ParseIP(address)) {
+			if r.Network.String() == "2001:5::/32" || r.Network.String() == "3fff::/20" {
+				t.Errorf("unexpected %s reservation for %s", r.Network, address)
+			}
+		}
+	}
+}
+
+func TestNewIPv6ReservationsRestrictReachability(t *testing.T) {
+	for _, tt := range []struct {
+		network     string
+		forwardable bool
+	}{
+		{"100:0:0:1::/64", false},
+		{"3fff::/20", false},
+		{"5f00::/16", true},
+	} {
+		t.Run(tt.network, func(t *testing.T) {
+			_, n, err := iplib.ParseCIDR(tt.network)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if IsGlobal(n) {
+				t.Error("special-purpose network must not be global")
+			}
+			if IsForwardable(n) != tt.forwardable {
+				t.Errorf("forwardable must be %t", tt.forwardable)
+			}
+		})
+	}
 }

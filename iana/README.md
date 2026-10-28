@@ -48,13 +48,13 @@ func main() {
 	_, neta, _ := iplib.ParseCIDR("2001::/16")
 	
 	res = iana.GetReservationsForNetwork(neta)
-	fmt.Println(len(res))                     // 10
+	fmt.Println(len(res))                     // 11
 	fmt.Println(iana.IsForwardable(neta))     // false
 	fmt.Println(iana.IsGlobal(neta))          // false
-	fmt.Println(iana.IsReserved(neta))        // true
+	fmt.Println(iana.IsReserved(neta))        // false
 	fmt.Println(iana.GetRFCsForNetwork(neta)) // all relevant RFCs, in this case: 
 	                                          // [RFC1752,RFC2928,RFC3849,RFC4380,
 	                                          //  RFC5180,RFC7343,RFC7450,RFC7535,
-	                                          //  RFC7723,RFC7954,RFC8155,RFC8190]
+	                                          //  RFC7723,RFC8155,RFC8190,RFC9374,RFC9665]
 }
 ```
