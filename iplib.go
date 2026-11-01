@@ -437,9 +437,17 @@ func IP6ToUint64(ip net.IP) uint64 {
 	return binary.BigEndian.Uint64(ipn)
 }
 
-// IP6ToUint128 converts a net.IPv6 to a uint128.Uint128
+// IP6ToUint128 converts a net.IPv6 to a uint128.Uint128. Input that is not an
+// IPv6 address yields the zero value, mirroring IP4ToUint32 and IP6ToUint64
 func IP6ToUint128(ip net.IP) uint128.Uint128 {
-	return uint128.FromBytesBE(ip)
+	if EffectiveVersion(ip) != IP6Version {
+		return uint128.Uint128{}
+	}
+	p := ip.To16()
+	if p == nil {
+		return uint128.Uint128{}
+	}
+	return uint128.FromBytesBE(p)
 }
 
 // IncrementIPBy returns a net.IP that is greater than the supplied net.IP by
