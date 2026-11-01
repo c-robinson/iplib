@@ -648,3 +648,26 @@ func TestIsAllZeroes(t *testing.T) {
 		}
 	}
 }
+
+func TestARPAToIP(t *testing.T) {
+	// The generic dispatcher must reverse IPToARPA for both IPv4 and IPv6,
+	// with and without a trailing dot (FQDN form).
+	for _, tt := range IPTests {
+		for _, suffix := range []string{"", "."} {
+			arpa := IPToARPA(tt.ipaddr) + suffix
+			ip := ARPAToIP(arpa)
+			if CompareIPs(ip, tt.ipaddr) != 0 {
+				t.Errorf("ARPAToIP(%q) = %v, want %s", arpa, ip, tt.ipaddr)
+			}
+		}
+	}
+	for _, tt := range IP6Tests {
+		for _, suffix := range []string{"", "."} {
+			arpa := IPToARPA(net.ParseIP(tt.ipaddr)) + suffix
+			ip := ARPAToIP(arpa)
+			if CompareIPs(ip, net.ParseIP(tt.ipaddr)) != 0 {
+				t.Errorf("ARPAToIP(%q) = %v, want %s", arpa, ip, tt.ipaddr)
+			}
+		}
+	}
+}
